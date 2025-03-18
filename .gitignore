@@ -26,6 +26,9 @@ dist/
 build/
 .cache/
 out/
+.next/
+.swc/
+.turbo/
 
 # Editor files
 .vscode/
