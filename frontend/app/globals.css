@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 33% 92%;
+    --foreground: 60 10% 25%;
+
+    --card: 60 33% 92%;
+    --card-foreground: 60 10% 25%;
+
+    --popover: 60 33% 92%;
+    --popover-foreground: 60 10% 25%;
+
+    --primary: 180 25% 69%;
+    --primary-foreground: 60 10% 25%;
+
+    --secondary: 60 10% 67%;
+    --secondary-foreground: 60 10% 25%;
+
+    --muted: 60 10% 67%;
+    --muted-foreground: 60 10% 40%;
+
+    --accent: 180 25% 69%;
+    --accent-foreground: 60 10% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 33% 92%;
+
+    --border: 60 10% 67%;
+    --input: 60 10% 67%;
+    --ring: 60 10% 25%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 60 10% 25%;
+    --foreground: 60 33% 92%;
+
+    --card: 60 10% 25%;
+    --card-foreground: 60 33% 92%;
+
+    --popover: 60 10% 25%;
+    --popover-foreground: 60 33% 92%;
+
+    --primary: 180 25% 58%;
+    --primary-foreground: 60 10% 25%;
+
+    --secondary: 60 10% 40%;
+    --secondary-foreground: 60 33% 92%;
+
+    --muted: 60 10% 40%;
+    --muted-foreground: 60 10% 67%;
+
+    --accent: 180 25% 58%;
+    --accent-foreground: 60 10% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 60 33% 92%;
+
+    --border: 60 10% 40%;
+    --input: 60 10% 40%;
+    --ring: 60 33% 92%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-beige {
+    background-color: #f5f5dc;
+  }
+  .text-beige {
+    color: #f5f5dc;
+  }
+  .bg-dark-olive {
+    background-color: #474838;
+  }
+  .text-dark-olive {
+    color: #474838;
+  }
+  .bg-olive {
+    background-color: #acac9a;
+  }
+  .text-olive {
+    color: #acac9a;
+  }
+  .bg-light-teal {
+    background-color: #b9dede;
+  }
+  .text-light-teal {
+    color: #b9dede;
+  }
+  .bg-teal {
+    background-color: #83a7a7;
+  }
+  .text-teal {
+    color: #83a7a7;
+  }
+  .border-beige {
+    border-color: #f5f5dc;
+  }
+  .border-dark-olive {
+    border-color: #474838;
+  }
+  .border-olive {
+    border-color: #acac9a;
+  }
+  .border-light-teal {
+    border-color: #b9dede;
+  }
+  .border-teal {
+    border-color: #83a7a7;
+  }
+}
+
