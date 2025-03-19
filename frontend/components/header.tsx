@@ -20,7 +20,7 @@ export default function Header() {
   const pathname = usePathname()
 
   const navigation = [
-    { name: "Dashboard", href: "/" },
+    { name: "Home", href: "/" },
     { name: "Tournaments", href: "/tournaments" },
     { name: "Teams", href: "/teams" },
     { name: "Players", href: "/players" },
@@ -71,7 +71,7 @@ export default function Header() {
               ))}
             </nav>
           </div>
-          <div className="hidden md:flex items-center">
+          {/* <div className="hidden md:flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -95,7 +95,7 @@ export default function Header() {
                 <DropdownMenuItem>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </div> */}
           <div className="flex items-center md:hidden">
             <Button variant="ghost" size="icon" className="text-beige" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -124,7 +124,32 @@ export default function Header() {
             ))}
           </div>
           <div className="pt-4 pb-3 border-t border-olive/20">
-            <div className="flex items-center px-4">
+            <div className="flex items-center">
+              <div className="hidden md:flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="/placeholder.svg" alt="User" />
+                        <AvatarFallback className="bg-light-teal text-dark-olive">AD</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">Admin</p>
+                        <p className="text-xs leading-none text-muted-foreground">admin@example.com</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Log out</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <div className="flex-shrink-0">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/placeholder.svg" alt="User" />

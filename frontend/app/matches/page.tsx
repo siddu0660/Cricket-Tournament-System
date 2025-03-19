@@ -156,7 +156,7 @@ export default function MatchesPage() {
                       <Link href={`/matches/${match.id}`}>Match Details</Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/matches/${match.id}/scorecard`}>Scorecard</Link>
+                      <Link href={`/matches/${match.id}`}>Scorecard</Link>
                     </Button>
                   </CardFooter>
                 </Card>

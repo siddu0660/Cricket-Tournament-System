@@ -14,12 +14,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
 
+type Fixture = {
+  team1: string;
+  team2: string;
+  date: Date | null;
+  venue: string | null;
+  stage?: 'group' | 'knockout';
+}
+
 export default function CreateTournamentPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [teams, setTeams] = useState([{ id: 1, name: "" }])
+  const [fixtures, setFixtures] = useState<Fixture[]>([])
+  const [fixtureType, setFixtureType] = useState<'group' | 'knockout'>('group')
 
   const handleAddTeam = () => {
     setTeams([...teams, { id: teams.length + 1, name: "" }])
@@ -45,10 +55,27 @@ export default function CreateTournamentPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would submit the form data to your API
     console.log("Form submitted")
     router.push("/tournaments")
   }
+
+  const generateFixtures = () => {
+    const newFixtures = []
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        newFixtures.push({
+          team1: teams[i].name,
+          team2: teams[j].name,
+          date: null,
+          venue: null
+        })
+      }
+    }
+    setFixtures(newFixtures)
+  }
+
+
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -63,7 +90,7 @@ export default function CreateTournamentPage() {
 
       <div className="mb-8">
         <div className="flex justify-between items-center">
-          {[1, 2, 3, 4].map((step) => (
+          {[1, 2, 3, 4, 5].map((step) => (
             <div
               key={step}
               className={`flex flex-col items-center ${
@@ -82,7 +109,7 @@ export default function CreateTournamentPage() {
                 {step}
               </div>
               <span className="text-sm hidden md:block">
-                {step === 1 ? "Basic Info" : step === 2 ? "Teams" : step === 3 ? "Format" : "Review"}
+                {step === 1 ? "Basic Info" : step === 2 ? "Teams" : step === 3 ? "Format" : step === 4 ? "Fixtures" : "Review"}
               </span>
             </div>
           ))}
@@ -293,6 +320,193 @@ export default function CreateTournamentPage() {
         )}
 
         {currentStep === 4 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Fixtures</CardTitle>
+              <CardDescription>Set up group stage and knockout matches</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Tabs defaultValue="group" className="w-full" onValueChange={(value) => setFixtureType(value as 'group' | 'knockout')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="group">Group Stage</TabsTrigger>
+                  <TabsTrigger value="knockout">Knockout Stage</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="group" className="space-y-4">
+                  {fixtures.length === 0 ? (
+                    <div className="text-center py-4">
+                      <Button 
+                        type="button" 
+                        onClick={generateFixtures}
+                        className="text-dark-olive"
+                      >
+                        Generate Group Stage Fixtures
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="text-sm text-olive mb-4">Group Stage Matches</div>
+                      {fixtures.map((fixture, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
+                          <div className="flex items-center justify-center text-center">
+                            <span className="font-medium">{fixture.team1}</span>
+                            <span className="mx-3">vs</span>
+                            <span className="font-medium">{fixture.team2}</span>
+                          </div>
+                          <div>
+                            <Label>Match Date</Label>
+                            <DatePicker 
+                              selected={fixture.date || undefined}
+                              onSelect={(date) => {
+                                const newFixtures = [...fixtures];
+                                newFixtures[index].date = date || null;
+                                setFixtures(newFixtures);
+                              }}
+                              disabled={(date) => date < (startDate || new Date()) || date > (endDate || new Date(2100, 0, 1))}
+                            />
+                          </div>
+                          <div>
+                            <Label>Venue</Label>
+                            <Input
+                              placeholder="Enter venue"
+                              value={fixture.venue || ''}
+                              onChange={(e) => {
+                                const newFixtures = [...fixtures];
+                                newFixtures[index].venue = e.target.value;
+                                setFixtures(newFixtures);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="knockout" className="space-y-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-sm text-olive">Knockout Stage Matches</div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setFixtures([...fixtures, {
+                          team1: '',
+                          team2: '',
+                          date: null,
+                          venue: null
+                        }])
+                      }}
+                      className="text-dark-olive"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Knockout Match
+                    </Button>
+                  </div>
+
+                  {fixtures.filter(f => f.team1 === '' || f.team2 === '').map((fixture, index) => (
+                    <div key={`knockout-${index}`} className="grid grid-cols-1 gap-4 p-4 border rounded-md">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Team 1</Label>
+                          <Select
+                            value={fixture.team1}
+                            onValueChange={(value) => {
+                              const newFixtures = [...fixtures];
+                              const targetIndex = fixtures.indexOf(fixture);
+                              newFixtures[targetIndex] = { ...fixture, team1: value };
+                              setFixtures(newFixtures);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select team" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.name}>
+                                  {team.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Team 2</Label>
+                          <Select
+                            value={fixture.team2}
+                            onValueChange={(value) => {
+                              const newFixtures = [...fixtures];
+                              const targetIndex = fixtures.indexOf(fixture);
+                              newFixtures[targetIndex] = { ...fixture, team2: value };
+                              setFixtures(newFixtures);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select team" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.name}>
+                                  {team.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Match Date</Label>
+                          <DatePicker 
+                            selected={fixture.date || undefined}
+                            onSelect={(date) => {
+                              const newFixtures = [...fixtures];
+                              const targetIndex = fixtures.indexOf(fixture);
+                              newFixtures[targetIndex] = { ...fixture, date: date || null };
+                              setFixtures(newFixtures);
+                            }}
+                            disabled={(date) => date < (startDate || new Date()) || date > (endDate || new Date(2100, 0, 1))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Venue</Label>
+                          <Input
+                            placeholder="Enter venue"
+                            value={fixture.venue || ''}
+                            onChange={(e) => {
+                              const newFixtures = [...fixtures];
+                              const targetIndex = fixtures.indexOf(fixture);
+                              newFixtures[targetIndex] = { ...fixture, venue: e.target.value };
+                              setFixtures(newFixtures);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button type="button" variant="outline" onClick={handlePrevious}>
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Previous
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleNext}
+                disabled={fixtures.length === 0}
+              >
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+
+        {currentStep === 5 && (
           <Card>
             <CardHeader>
               <CardTitle>Review & Create</CardTitle>
