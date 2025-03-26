@@ -11,8 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus } from "lucide-react";
-import { VenueForm } from "@/components/venues/venue-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import axios from "axios";
 
 interface Venue {
   venueId: number;
@@ -22,6 +21,8 @@ interface Venue {
   surfaceType: string;
   country: string;
 }
+
+const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com"
 
 // Add new Match interface after the Venue interface
 interface Match {
@@ -125,19 +126,22 @@ const staticVenues: VenueWithMatches[] = [
   }
 ]
 
-
+// Remove all static data and modify the component
 export default function VenuesPage() {
-  const [venues, setVenues] = useState<VenueWithMatches[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [expandedVenue, setExpandedVenue] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const fetchVenues = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/v2/venue`);
+      setVenues(response.data);
+      console.log("Successfully fetched venues");
+    } catch (error) {
+      console.error("Error fetching venues:", error);
+    }
+  };
 
   useEffect(() => {
-    // Simulate API call with static data
-    const fetchVenues = async () => {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setVenues(staticVenues);
-    };
     fetchVenues();
   }, []);
 
@@ -145,20 +149,10 @@ export default function VenuesPage() {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Venues</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Venue
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Venue</DialogTitle>
-            </DialogHeader>
-            <VenueForm onSuccess={() => setIsDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => window.location.href = '/venues/create'}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Venue
+        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -186,7 +180,7 @@ export default function VenuesPage() {
                   <TableCell className="capitalize">{venue.surfaceType}</TableCell>
                   <TableCell>{venue.country}</TableCell>
                 </TableRow>
-                {expandedVenue === venue.venueId && (
+                {/* {expandedVenue === venue.venueId && (
                   <TableRow>
                     <TableCell colSpan={6}>
                       <div className="p-4 bg-gray-50">
@@ -216,7 +210,7 @@ export default function VenuesPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                )} */}
               </>
             ))}
           </TableBody>

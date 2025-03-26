@@ -1,11 +1,35 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
 import { Users } from "lucide-react"
+import axios from "axios"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+
+interface Team {
+  teamId: number;
+  teamName: string;
+  teamOwner: string;
+  sinceYear: number;
+  tournamentsPlayed: string[];
+  matchesWon: number;
+  matchesLost: number;
+  matchesDrawn: number;
+  noResultMatches: number;
+  totalPoints: number;
+}
+
+const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com"
+
+
 
 export default function TeamsPage() {
   // This would be fetched from an API in a real application
-  const teams = [
+  const [teams, setTeams] = useState<Team[]>([])
+  const teamsData = [
     {
       id: 1,
       name: "Mumbai Mavericks",
@@ -62,6 +86,24 @@ export default function TeamsPage() {
     },
   ]
 
+  const fetchTeams = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/v2/teams`);
+      setTeams(response.data); 
+      console.log("Successfully fetched teams");
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      console.log("Failed to fetch teams");
+    }
+  };
+
+  useEffect(() => {
+    fetchTeams(); 
+  }, []);
+
+
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -70,50 +112,65 @@ export default function TeamsPage() {
             <Users className="h-6 w-6 text-cricket-darkOlive" />
             <span className="text-xl font-bold">Teams</span>
           </div>
-          <Button asChild>
-            <Link href="/teams/create">Register Team</Link>
-          </Button>
+        <div>
+            <div className="flex items-center gap-4">
+              <div className="flex w-full max-w-sm items-center gap-2">
+                <Input
+                  type="search"
+                  placeholder="Search teams..."
+                  className="w-[300px]"
+                />
+                <Button variant="secondary" size="icon">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button asChild>
+                <Link href="/teams/create">Register Team</Link>
+              </Button>
+            </div>
+          </div>  
         </div>
+
       </header>
       <main className="flex-1 container py-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
-            <Card key={team.id} className="overflow-hidden">
+            <Card key={team.teamId} className="overflow-hidden">
               <CardHeader className="bg-cricket-sage text-cricket-darkOlive pb-2">
-                <CardTitle className="text-xl">{team.name}</CardTitle>
+                <CardTitle className="text-xl">{team.teamName}</CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Owner:</span>
-                    <span className="text-sm">{team.owner}</span>
+                    <span className="text-sm">{team.teamOwner}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Established:</span>
-                    <span className="text-sm">{team.since}</span>
+                    <span className="text-sm">{team.sinceYear}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Tournaments Played:</span>
-                    <span className="text-sm">{team.tournaments}</span>
+                    <span className="text-sm font-medium">Tournaments:</span>
+                    <span className="text-sm">{team.tournamentsPlayed.length}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Win/Loss Record:</span>
+                    <span className="text-sm font-medium">Match Statistics:</span>
                     <span className="text-sm">
-                      {team.matches.won}W - {team.matches.lost}L - {team.matches.drawn}D
+                      {team.matchesWon}W - {team.matchesLost}L - {team.matchesDrawn}D - {team.noResultMatches}NR
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Squad Size:</span>
-                    <span className="text-sm">{team.players} players</span>
+                    <span className="text-sm font-medium">Total Points:</span>
+                    <span className="text-sm">{team.totalPoints}</span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-3">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/teams/${team.id}`}>Team Details</Link>
+                  <Link href={`/teams/${team.teamId}`}>Team Details</Link>
                 </Button>
                 <Button asChild variant="default" size="sm">
-                  <Link href={`/teams/${team.id}/players`}>View Players</Link>
+                  <Link href={`/teams/${team.teamId}/players`}>View Players</Link>
                 </Button>
               </CardFooter>
             </Card>
