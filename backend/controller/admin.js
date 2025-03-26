@@ -5,8 +5,8 @@ function addTeam(data) {
     return new Promise((resolve, reject) => {
         const sql = `
                     INSERT INTO Team 
-                    (teamName, teamOwner, sinceYear, tournamentsPlayed, coaches)
-                    VALUES (?, ?, ?, ?, ?)
+                    (teamName, teamOwner, sinceYear, tournamentsPlayed, matchesWon, matchesLost, matchesDrawn)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
 
         const values = [
@@ -14,7 +14,9 @@ function addTeam(data) {
         data.teamOwner,
         data.sinceYear,
         JSON.stringify(data.tournamentsPlayed || []),
-        JSON.stringify(data.coaches || []),
+        data.matchesWon,
+        data.matchesLost,
+        data.matchesDrawn,
         ];
 
         db.query(sql, values, (err, result) => {
@@ -353,6 +355,13 @@ const tournamentAdminController = {
     addTournament,
     updateTournament,
     deleteTournament,
+}
+
+const matchAdminController = {
+    addMatch,
+    updateMatch,
+    deleteMatch,
+    updateMatchResult
 }
 
 module.exports = {

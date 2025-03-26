@@ -4,13 +4,13 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController } = require("./controller/user");
-const { teamAdminController, venueAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
 app.use(
     cors({
-        origin: [process.env.URL_DEV, process.env.URL_ADMIN],
+        origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
@@ -39,6 +39,15 @@ app.use("/api", userRouter);
 userRouter.get("/teams", async (req, res) => {
     try {
         const teams = await teamController.getAllTeams();
+        res.status(200).json(teams);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+userRouter.get("/teamsTournament/:id", async (req, res) => {
+    try {
+        const teams = await teamController.getTeamsByTournament(req.params.id);
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -129,11 +138,20 @@ userRouter.get("/tournaments/:id/matches", async (req, res) => {
 // Admin Routes
 
 const adminRouter = express.Router();
-app.use("/apiv2", adminRouter);
+app.use("/api/v2", adminRouter);
 
 adminRouter.get("/teams", async (req, res) => {
     try {
         const teams = await teamController.getAllTeams();
+        res.status(200).json(teams);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+adminRouter.get("/teamsTournament/:id", async (req, res) => {
+    try {
+        const teams = await teamController.getTeamsByTournament(req.params.id);
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });

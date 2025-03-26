@@ -1,7 +1,21 @@
 const db = require("../config/db.js");
 
 // Teams
-function getAllTeams(tournamentId) {
+
+function getAllTeams() {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Team";
+    db.query(sql, (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
+function getTeamsByTournament(tournamentId) {
     return new Promise((resolve, reject) => {
         const sql = "SELECT * FROM Team WHERE JSON_CONTAINS(tournamentsPlayed, ?)";
         db.query(sql, [tournamentId], (err, results) => {
@@ -135,35 +149,7 @@ function getMatchesByTournament(tournamentId) {
 
 // ----------------------------------------------------------- //
 
-function getPlayerById(playerId) {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM Player WHERE playerId = ?";
-    db.query(sql, [playerId], (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result[0]);
-      }
-    });
-  });
-}
-
-function getAllPlayers() {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM Player";
-    db.query(sql, (err, results) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(results);
-      }
-    });
-  });
-}
-
-//getPlayersStats
-//getPlayerMatchStats
-//getPlayerTournamentStats
+// Matches
 
 function getAllMatches() {
   return new Promise((resolve, reject) => {
@@ -194,7 +180,38 @@ function getMatchById(matchId) {
 //getMatchScoreCard
 //getMatchStats
 
+// ----------------------------------------------------------- //
 
+// Players
+function getPlayerById(playerId) {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Player WHERE playerId = ?";
+    db.query(sql, [playerId], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result[0]);
+      }
+    });
+  });
+}
+
+function getAllPlayers() {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Player";
+    db.query(sql, (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
+//getPlayersStats
+//getPlayerMatchStats
+//getPlayerTournamentStats
 
 
 function getPlayersByTeam(teamId) {
@@ -227,6 +244,7 @@ function getMatchesByTeam(teamId, tournamentId) {
 
 const teamController = {
     getAllTeams,
+    getTeamsByTournament,
     getTeamById,
     getTournamentsByTeam,
 };
