@@ -202,7 +202,7 @@ adminRouter.delete("/teams/:id", async (req, res) => {
 
 adminRouter.get("/venue", async (req, res) => {
     try {
-        const teams = await venueController.getAllTeams();
+        const teams = await venueController.getAllVenues();
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
