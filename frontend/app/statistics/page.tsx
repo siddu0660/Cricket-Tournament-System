@@ -24,7 +24,7 @@ export default function StatisticsPage() {
       <div className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Statistics</h1>
         
-        <Tabs defaultValue="teams" className="w-full">
+        <Tabs defaultValue="tournaments" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="tournaments">Tournament Statistics</TabsTrigger>
             <TabsTrigger value="teams">Team Statistics</TabsTrigger>

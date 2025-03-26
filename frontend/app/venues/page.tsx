@@ -10,8 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Search, MapPin } from "lucide-react";
 import axios from "axios";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 interface Venue {
   venueId: number;
@@ -146,76 +148,96 @@ export default function VenuesPage() {
   }, []);
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Venues</h1>
-        <Button onClick={() => window.location.href = '/venues/create'}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Venue
-        </Button>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead></TableHead> {/* For expand/collapse button */}
-              <TableHead>Name</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Capacity</TableHead>
-              <TableHead>Surface Type</TableHead>
-              <TableHead>Country</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {venues.map((venue) => (
-              <>
-                <TableRow key={venue.venueId} className="cursor-pointer hover:bg-gray-100" onClick={() => setExpandedVenue(expandedVenue === venue.venueId ? null : venue.venueId)}>
-                  <TableCell>
-                    {expandedVenue === venue.venueId ? "▼" : "▶"}
-                  </TableCell>
-                  <TableCell>{venue.venueName}</TableCell>
-                  <TableCell>{venue.venueLocation}</TableCell>
-                  <TableCell>{venue.capacity.toLocaleString()}</TableCell>
-                  <TableCell className="capitalize">{venue.surfaceType}</TableCell>
-                  <TableCell>{venue.country}</TableCell>
-                </TableRow>
-                {/* {expandedVenue === venue.venueId && (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <div className="p-4 bg-gray-50">
-                        <h3 className="font-semibold mb-2">Matches Played</h3>
-                        {venue.matches.length > 0 ? (
-                          <table className="w-full">
-                            <thead>
-                              <tr>
-                                <th className="text-left">Date</th>
-                                <th className="text-left">Teams</th>
-                                <th className="text-left">Result</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {venue.matches.map((match) => (
-                                <tr key={match.matchId}>
-                                  <td>{new Date(match.date).toLocaleDateString()}</td>
-                                  <td>{match.homeTeam} vs {match.awayTeam}</td>
-                                  <td>{match.result}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p className="text-gray-500">No matches played at this venue yet.</p>
-                        )}
-                      </div>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-6 w-6 text-cricket-darkOlive" />
+            <span className="text-xl font-bold">Venues</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex w-full max-w-sm items-center gap-2">
+              <Input
+                type="search"
+                placeholder="Search venues..."
+                className="w-[300px]"
+              />
+              <Button variant="secondary" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button asChild>
+              <Link href="/venues/create">
+                {/* <Plus className="mr-2 h-4 w-4" /> */}
+                Add Venue
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 container py-8">
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead></TableHead> {/* For expand/collapse button */}
+                <TableHead>Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Capacity</TableHead>
+                <TableHead>Surface Type</TableHead>
+                <TableHead>Country</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {venues.map((venue) => (
+                <>
+                  <TableRow key={venue.venueId} className="cursor-pointer hover:bg-gray-100" onClick={() => setExpandedVenue(expandedVenue === venue.venueId ? null : venue.venueId)}>
+                    <TableCell>
+                      {expandedVenue === venue.venueId ? "▼" : "▶"}
                     </TableCell>
+                    <TableCell>{venue.venueName}</TableCell>
+                    <TableCell>{venue.venueLocation}</TableCell>
+                    <TableCell>{venue.capacity.toLocaleString()}</TableCell>
+                    <TableCell className="capitalize">{venue.surfaceType}</TableCell>
+                    <TableCell>{venue.country}</TableCell>
                   </TableRow>
-                )} */}
-              </>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                  {/* {expandedVenue === venue.venueId && (
+                    <TableRow>
+                      <TableCell colSpan={6}>
+                        <div className="p-4 bg-gray-50">
+                          <h3 className="font-semibold mb-2">Matches Played</h3>
+                          {venue.matches.length > 0 ? (
+                            <table className="w-full">
+                              <thead>
+                                <tr>
+                                  <th className="text-left">Date</th>
+                                  <th className="text-left">Teams</th>
+                                  <th className="text-left">Result</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {venue.matches.map((match) => (
+                                  <tr key={match.matchId}>
+                                    <td>{new Date(match.date).toLocaleDateString()}</td>
+                                    <td>{match.homeTeam} vs {match.awayTeam}</td>
+                                    <td>{match.result}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <p className="text-gray-500">No matches played at this venue yet.</p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )} */}
+                </>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </main>
     </div>
   );
 } 
