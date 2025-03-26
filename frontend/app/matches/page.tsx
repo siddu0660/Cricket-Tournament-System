@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, MapPin, Trophy } from "lucide-react"
+import { Calendar, Clock, MapPin, Trophy, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 export default function MatchesPage() {
   // This would be fetched from an API in a real application
@@ -70,9 +71,21 @@ export default function MatchesPage() {
             <Trophy className="h-6 w-6 text-cricket-darkOlive" />
             <span className="text-xl font-bold">Matches</span>
           </div>
-          <Button asChild>
-            <Link href="/matches/create">Schedule Match</Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex w-full max-w-sm items-center gap-2">
+              <Input
+                type="search"
+                placeholder="Search matches, players, tournaments..."
+                className="w-[300px]"
+              />
+              <Button variant="secondary" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button asChild>
+              <Link href="/matches/create">Schedule Match</Link>
+            </Button>
+          </div>
         </div>
       </header>
       <main className="flex-1 container py-8">

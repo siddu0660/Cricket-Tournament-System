@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { CalendarDays, Trophy, Users, MapPin, BarChart3, Clock } from "lucide-react"
+import { CalendarDays, Award, Users, MapPin, BarChart3, Clock } from "lucide-react"
 
 export default function Home() {
   return (
@@ -48,7 +48,7 @@ export default function Home() {
                     <span>10 Teams</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-olive" />
+                    <Award className="h-4 w-4 text-olive" />
                     <span>T20 Format</span>
                   </div>
                   <div className="mt-4">
@@ -76,7 +76,7 @@ export default function Home() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-olive" />
+                    <Award className="h-4 w-4 text-olive" />
                     <span className="text-sm text-olive">IPL 2023</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export default function Home() {
         <Card className="border-olive/20">
           <CardHeader>
             <CardTitle className="text-dark-olive flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-teal" />
+              <Award className="h-5 w-5 text-teal" />
               Tournaments
             </CardTitle>
           </CardHeader>

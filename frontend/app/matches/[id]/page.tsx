@@ -132,7 +132,7 @@ export default function MatchDetailsPage({ params }: { params: { id: string } })
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-cricket-brown" />
+                  <Trophy className="h-5 w-5 text-cricket-brown" />
                   <span>
                     Toss: {match.toss.winner} won and elected to {match.toss.decision}
                   </span>
@@ -142,7 +142,7 @@ export default function MatchDetailsPage({ params }: { params: { id: string } })
                   <span>Umpires: {match.umpires.join(", ")}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-cricket-brown" />
+                  <Trophy className="h-5 w-5 text-cricket-brown" />
                   <span>
                     Man of the Match: {match.manOfTheMatch.name} ({match.manOfTheMatch.performance})
                   </span>

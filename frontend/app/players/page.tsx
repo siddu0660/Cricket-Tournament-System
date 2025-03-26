@@ -1,7 +1,9 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Flag, Calendar, Award } from "lucide-react"
+import { User, Flag, Calendar, Award, Users } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
 
 export default function PlayersPage() {
   // This would be fetched from an API in a real application
@@ -124,9 +126,24 @@ export default function PlayersPage() {
             <User className="h-6 w-6 text-cricket-darkOlive" />
             <span className="text-xl font-bold">Players</span>
           </div>
-          <Button asChild>
-            <Link href="/players/create">Register Player</Link>
-          </Button>
+          <div>
+            <div className="flex items-center gap-4">
+              <div className="flex w-full max-w-sm items-center gap-2">
+                <Input
+                  type="search"
+                  placeholder="Search players..."
+                  className="w-[300px]"
+                />
+                <Button variant="secondary" size="icon">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button asChild>
+                <Link href="/players/create">Register Player</Link>
+              </Button>
+            </div>
+          </div>
+          
         </div>
       </header>
       <main className="flex-1 container py-8">
@@ -155,7 +172,7 @@ export default function PlayersPage() {
                     <span className="text-sm">Born: {new Date(player.dateOfBirth).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-cricket-brown" />
+                    <Users className="h-4 w-4 text-cricket-brown" />
                     <span className="text-sm">Team: {player.team}</span>
                   </div>
                   <div className="mt-2 pt-2 border-t">

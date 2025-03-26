@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { CalendarDays, MapPin, Trophy, Users } from "lucide-react"
+import { Award, CalendarDays, MapPin, Users, Search } from "lucide-react"
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react"
 
 export default function TournamentsPage() {
@@ -121,7 +121,7 @@ export default function TournamentsPage() {
             <span>{tournament.teams} Teams</span>
           </div>
           <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-olive" />
+            <Award className="h-4 w-4 text-olive" />
             <span>{tournament.format} Format</span>
           </div>
         </div>
@@ -135,101 +135,106 @@ export default function TournamentsPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-dark-olive mb-2">Tournaments</h1>
-          <p className="text-olive">Manage all cricket tournaments in one place</p>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="h-6 w-6 text-dark-olive" />
+            <span className="text-xl font-bold">Tournaments</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+              <Select value={formatFilter} onValueChange={setFormatFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Formats</SelectItem>
+                    <SelectItem value="t20">T20</SelectItem>
+                    <SelectItem value="odi">ODI</SelectItem>
+                    <SelectItem value="test">Test</SelectItem>
+                    <SelectItem value="100-ball">100-ball</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Search tournaments..."
+                  className="w-[300px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Button variant="secondary" size="icon">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button asChild className="bg-light-teal hover:bg-teal text-dark-olive">
+                <Link href="/tournaments/create">Create Tournament</Link>
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button asChild className="mt-4 md:mt-0 bg-light-teal hover:bg-teal text-dark-olive">
-          <Link href="/tournaments/create">Create Tournament</Link>
-        </Button>
-      </div>
+      </header>
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <Input 
-            placeholder="Search tournaments..." 
-            className="md:max-w-xs" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Select 
-            value={formatFilter} 
-            onValueChange={setFormatFilter}
-          >
-            <SelectTrigger className="md:w-[180px]">
-              <SelectValue placeholder="Format" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Formats</SelectItem>
-              <SelectItem value="t20">T20</SelectItem>
-              <SelectItem value="odi">ODI</SelectItem>
-              <SelectItem value="test">Test</SelectItem>
-              <SelectItem value="100-ball">100-ball</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="all" className="mb-8">
+          <TabsList className="mb-6">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTournaments.length > 0 ? (
+                filteredTournaments.map(renderTournamentCard)
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-gray-500">No tournaments found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="active" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTournaments.filter((t) => t.status === "active").length > 0 ? (
+                filteredTournaments
+                  .filter((t) => t.status === "active")
+                  .map(renderTournamentCard)
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-gray-500">No active tournaments found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="upcoming" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTournaments.filter((t) => t.status === "upcoming").length > 0 ? (
+                filteredTournaments
+                  .filter((t) => t.status === "upcoming")
+                  .map(renderTournamentCard)
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-gray-500">No upcoming tournaments found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="completed" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTournaments.filter((t) => t.status === "completed").length > 0 ? (
+                filteredTournaments
+                  .filter((t) => t.status === "completed")
+                  .map(renderTournamentCard)
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-gray-500">No completed tournaments found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="all" className="mb-8">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-        </TabsList>
-        <TabsContent value="all" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTournaments.length > 0 ? (
-              filteredTournaments.map(renderTournamentCard)
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">No tournaments found matching your criteria.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        <TabsContent value="active" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTournaments.filter((t) => t.status === "active").length > 0 ? (
-              filteredTournaments
-                .filter((t) => t.status === "active")
-                .map(renderTournamentCard)
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">No active tournaments found matching your criteria.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        <TabsContent value="upcoming" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTournaments.filter((t) => t.status === "upcoming").length > 0 ? (
-              filteredTournaments
-                .filter((t) => t.status === "upcoming")
-                .map(renderTournamentCard)
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">No upcoming tournaments found matching your criteria.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        <TabsContent value="completed" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTournaments.filter((t) => t.status === "completed").length > 0 ? (
-              filteredTournaments
-                .filter((t) => t.status === "completed")
-                .map(renderTournamentCard)
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">No completed tournaments found matching your criteria.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { CalendarDays, ChevronLeft, MapPin, Trophy, Users, Clock } from "lucide-react"
+import { CalendarDays, ChevronLeft, MapPin, Trophy, Users, Clock, Award } from "lucide-react"
 import TournamentMatches from "@/components/tournament-matches"
 import TournamentStandings from "@/components/tournament-standings"
 import TournamentStats from "@/components/tournament-stats"
@@ -79,7 +79,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         <Card className="border-olive/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Trophy className="h-5 w-5 text-teal" />
+              <Award className="h-5 w-5 text-teal" />
               <div>
                 <div className="text-sm text-olive">Format</div>
                 <div className="font-medium text-dark-olive">{tournament.format}</div>
