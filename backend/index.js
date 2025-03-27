@@ -151,6 +151,8 @@ adminRouter.get("/teams", async (req, res) => {
 
 adminRouter.get("/teamsTournament/:id", async (req, res) => {
     try {
+        console.log("Teams of Tournament Body : ",req.body);
+        console.log("Teams of Tournament Params : ",req.params);
         const teams = await teamController.getTeamsByTournament(req.params.id);
         res.status(200).json(teams);
     } catch (error) {
@@ -305,7 +307,7 @@ adminRouter.post("/tournaments", async (req, res) => {
     }
 });
 
-adminRouter.put("/tournaments/:id", async (req, res) => {
+adminRouter.put("/tournaments/:name", async (req, res) => {
     try {
         await tournamentAdminController.updateTournament(req.params.id, req.body);
         res.status(200).json({ message: "Tournament updated successfully" });
