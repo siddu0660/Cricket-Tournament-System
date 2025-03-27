@@ -241,7 +241,7 @@ function addMatch(tournamentId, data) {
     return new Promise((resolve, reject) => {
         const sql = `
                 INSERT INTO Matches
-                (tournamentId, team1Id, team2Id, venueId, matchDate, matchStartTime, matchFormat, tossWinnerTeam1, tossDecision, umpires)
+                (tournamentId, team1Id, team2Id, venueId, matchDate)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
@@ -251,11 +251,6 @@ function addMatch(tournamentId, data) {
         data.team2Id,
         data.venueId,
         data.matchDate,
-        data.matchStartTime,
-        data.matchFormat,
-        data.tossWinnerTeam1,
-        data.tossDecision,
-        JSON.stringify(data.umpires),
         ];
 
         db.query(sql, values, (err, result) => {
