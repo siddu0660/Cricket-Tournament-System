@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
@@ -315,6 +315,18 @@ adminRouter.delete("/tournaments/:id", async (req, res) => {
     try {
         await tournamentAdminController.deleteTournament(req.params.id);
         res.status(200).json({ message: "Tournament deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+adminRouter.post("/matchesTournament/:id", async (req, res) => {
+    try {
+        const result = await matchAdminController.addMatches(req.body, req.params.id);
+        res.status(201).json({
+        message: "Match created successfully",
+        matchId: result.insertId,
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

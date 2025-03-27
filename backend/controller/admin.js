@@ -268,6 +268,41 @@ function addMatch(tournamentId, data) {
     });
 }
 
+function addMatches(tournamentId, data)
+{
+    return new Promise((resolve, reject) => {
+        let sql = `
+            INSERT INTO Matches
+            (tournamentId, team1Id, team2Id, venueId, matchDate, matchStartTime, matchFormat, tossWinnerTeam1, tossDecision, umpires)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        let values = [];
+
+        for (let i = 0; i < data.length; i++) {
+            values.push(
+                tournamentId,
+                data[i].team1Id,
+                data[i].team2Id,
+                data[i].venueId,
+                data[i].matchDate,
+                data[i].matchStartTime,
+                data[i].matchFormat,
+                data[i].tossWinnerTeam1,
+                data[i].tossDecision,
+                JSON.stringify(data[i].umpires),
+            );
+        }
+
+        db.query(sql, values, (err, result) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(result);
+        }
+        });
+    });
+}
+
 function updateMatch(matchId, data) {
     return new Promise((resolve, reject) => {
         if (Object.keys(data).length === 0) {
@@ -359,6 +394,7 @@ const tournamentAdminController = {
 
 const matchAdminController = {
     addMatch,
+    addMatches,
     updateMatch,
     deleteMatch,
     updateMatchResult
@@ -368,4 +404,5 @@ module.exports = {
     teamAdminController,
     venueAdminController,
     tournamentAdminController,
+    matchAdminController
 }
