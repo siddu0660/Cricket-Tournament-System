@@ -161,17 +161,21 @@ function addTournament(data) {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
+        const teamsArray = JSON.parse(data.teams);
+        const weightageArray = JSON.parse(data.weightage);
+        const sponsorshipArray = JSON.parse(data.sponsorship);
+
         const values = [
         data.tournamentName,
         data.startDate,
         data.endDate,
         data.tourLocation,
         data.numberOfTeams,
-        JSON.stringify(data.teams),
+        JSON.stringify(teamsArray),
         data.numberOfMatches,
         data.tourFormat,
-        JSON.stringify(data.weightage),
-        JSON.stringify(data.sponsorship),
+        JSON.stringify(weightageArray),
+        JSON.stringify(sponsorshipArray),
         ];
 
         db.query(sql, values, (err, result) => {
