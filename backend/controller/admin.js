@@ -263,34 +263,40 @@ function addMatch(tournamentId, data) {
     });
 }
 
-function addMatches(tournamentId, data) {
+function addMatches(tournamentId, matches) {
     return new Promise((resolve, reject) => {
-        let dataArray = Array.isArray(data) ? data : [data];
+        const results = [];
+        let completed = 0;
 
-        let sql = `
-            INSERT INTO Matches
-            (tournamentId, team1Id, team2Id, venueId, matchDate)
-            VALUES ?
-        `;
-        
-        let values = dataArray.map(match => [
-            tournamentId,
-            match.team1Id,
-            match.team2Id,
-            match.venueId,
-            match.matchDate,
-        ]);
+        matches.forEach((match) => {
+            const sql = `
+                INSERT INTO Matches
+                (tournamentId, team1Id, team2Id, venueId, matchDate)
+                VALUES (?, ?, ?, ?, ?)
+            `;
 
-        db.query(sql, [values], (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result);
-            }
+            const values = [
+                tournamentId,
+                match.team1Id,
+                match.team2Id,
+                match.venueId,
+                match.matchDate,
+            ];
+
+            db.query(sql, values, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    results.push(result);
+                    completed += 1;
+                    if (completed === matches.length) {
+                        resolve(results);
+                    }
+                }
+            });
         });
     });
 }
-
 
 function updateMatch(matchId, data) {
     return new Promise((resolve, reject) => {

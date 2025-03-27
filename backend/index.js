@@ -355,11 +355,20 @@ adminRouter.delete("/tournaments/:id", async (req, res) => {
 
 adminRouter.post("/matchesTournament/:id", async (req, res) => {
     try {
-        console.log("Request Body for Matches Tour : ",req.body, " ID ", req.params.id);
-        const result = await matchAdminController.addMatches(req.body, req.params.id);
+        console.log("Request Body for Matches Tour : ", req.body, " ID ", req.params.id);
+        
+        const matches = req.body;
+        const results = [];
+
+        for (const match of matches) {
+            match.tournamentId = req.params.id;
+            const result = await matchAdminController.addMatches(req.params.id, [match]);
+            results.push(result);
+        }
+
         res.status(201).json({
-        message: "Match created successfully",
-        matchId: result.insertId,
+            message: "Matches created successfully",
+            results: results.map(result => result.insertId),
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
