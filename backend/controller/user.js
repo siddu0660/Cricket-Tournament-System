@@ -17,7 +17,7 @@ function getAllTeams() {
 
 function getTeamsByTournament(tournamentId) {
     return new Promise((resolve, reject) => {
-        const sql = "SELECT * FROM Team WHERE JSON_CONTAINS(tournamentsPlayed, ?)";
+        const sql = "SELECT * FROM Team WHERE JSON_CONTAINS(tournamentsPlayed, JSON_ARRAY(?))";
         db.query(sql, [tournamentId], (err, results) => {
         if (err) {
             reject(err);
