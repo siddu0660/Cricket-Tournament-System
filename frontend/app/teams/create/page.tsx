@@ -39,7 +39,7 @@ export default function CreateTeamPage() {
     e.preventDefault()
     try {
       console.log("Sending data:", formData)
-      const response = await axios.post(`${process.env.BACKEND_URL}/api/v2/teams`, formData)
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/teams`, formData)
       console.log("Successfully added team:", response.data)
       router.push('/teams')
       router.refresh()

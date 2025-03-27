@@ -46,7 +46,7 @@ export default function VenuesPage() {
 
   const fetchVenues = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.BACKEND_URL}/api/v2/venue`);
+      const response = await axios.get(`${import.meta.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/venue`);
       setVenues(response.data);
       console.log("Successfully fetched venues");
     } catch (error) {

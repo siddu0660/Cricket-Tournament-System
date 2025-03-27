@@ -17,7 +17,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 
-
 interface Team {
   teamId: number;
   teamName: string;
@@ -31,9 +30,6 @@ interface Team {
   totalPoints: number;
 }
 
-
-
-
 export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [teamToDelete, setTeamToDelete] = useState<number | null>(null)
@@ -41,7 +37,7 @@ export default function TeamsPage() {
 
   const fetchTeams = async () => {
     try {
-      const response = await axios.get(`${process.env.BACKEND_URL}/api/v2/teams`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/teams`);
       setTeams(response.data); 
       console.log("Successfully fetched teams");
     } catch (error) {
@@ -51,7 +47,7 @@ export default function TeamsPage() {
 
   const deleteTeam = async (teamId: number) => {
     try {
-      await axios.delete(`${process.env.BACKEND_URL}/api/v2/teams/${teamId}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/teams/${teamId}`);
       await fetchTeams();
     } catch (error) {
       console.error("Error deleting team:", error);
@@ -70,8 +66,6 @@ export default function TeamsPage() {
       setTeamToDelete(null);
     }
   };
-
-
 
   return (
     <div className="flex min-h-screen flex-col">

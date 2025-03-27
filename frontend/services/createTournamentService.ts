@@ -14,7 +14,7 @@ export const createTournament = async (tournamentData: Tournament): Promise<Tour
       sponsorship: JSON.stringify(tournamentData.sponsorship),
     };
 
-    const response = await axios.post(`${process.env.BACKEND_URL}/api/v2/tournaments`, formattedData);
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/tournaments`, formattedData);
     console.log(response.data);
     
     if (response.status !== 201) {
