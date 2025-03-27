@@ -177,6 +177,20 @@ function getMatchById(matchId) {
   });
 }
 
+function getMatchesByTeam(teamId, tournamentId) {
+  return new Promise((resolve, reject) => {
+    const sql =
+      "SELECT * FROM Matches WHERE (team1Id = ? OR team2Id = ?) AND tournamentId = ?";
+    db.query(sql, [teamId, teamId, tournamentId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
 //getMatchScoreCard
 //getMatchStats
 
@@ -209,11 +223,6 @@ function getAllPlayers() {
   });
 }
 
-//getPlayersStats
-//getPlayerMatchStats
-//getPlayerTournamentStats
-
-
 function getPlayersByTeam(teamId) {
   return new Promise((resolve, reject) => {
     const sql = "SELECT * FROM Player WHERE JSON_CONTAINS(teamsPlayed, ?)";
@@ -227,20 +236,9 @@ function getPlayersByTeam(teamId) {
   });
 }
 
-//getTeamMatches
-function getMatchesByTeam(teamId, tournamentId) {
-  return new Promise((resolve, reject) => {
-    const sql =
-      "SELECT * FROM Matches WHERE (team1Id = ? OR team2Id = ?) AND tournamentId = ?";
-    db.query(sql, [teamId, teamId, tournamentId], (err, results) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(results);
-      }
-    });
-  });
-}
+//getPlayersStats
+//getPlayerMatchStats
+//getPlayerTournamentStats
 
 const teamController = {
     getAllTeams,
@@ -261,8 +259,22 @@ const tournamentController = {
     getMatchesByTournament
 }
 
+const matchController = {
+    getAllMatches,
+    getMatchById,
+    getMatchesByTeam
+}
+
+const playerController = {
+    getPlayerById,
+    getAllPlayers,
+    getPlayersByTeam
+}
+
 module.exports = {
     teamController,
     venueController,
-    tournamentController
+    tournamentController,
+    matchController,
+    playerController
 };

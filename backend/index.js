@@ -3,7 +3,7 @@ const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const { teamController, venueController, tournamentController } = require("./controller/user");
+const { teamController, venueController, tournamentController, matchController } = require("./controller/user");
 const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController } = require("./controller/admin");
 
 require("dotenv").config();
@@ -145,6 +145,48 @@ userRouter.get("/tournaments/:id/matches", async (req, res) => {
     }
 });
 
+userRouter.get("/matches", async (req, res) => {
+    try {
+        const matches = await matchController.getAllMatches();
+        res.status(200).json(matches);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+userRouter.get("/matches/:id", async (req, res) => {
+    try {
+        const match = await matchController.getMatchById(req.params.id);
+        if (!match) {
+        return res.status(404).json({ error: "Match not found" });
+        }
+        res.status(200).json(match);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+userRouter.get("/matches/:teamId/:tournamentId", async (req, res) => {
+    try {
+        const teams = await matchController.getTeamsByMatch(req.params.teamId, req.params.tournamentId);
+        res.status(200).json(teams);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+userRouter.get("/players", async (req, res) => {
+    try {
+        const players = await playerController.getAllPlayers();
+        res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
 // Admin Routes
 
 const adminRouter = express.Router();
@@ -370,6 +412,16 @@ adminRouter.post("/matchesTournament/:id", async (req, res) => {
             message: "Matches created successfully",
             results: results.map(result => result.insertId),
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.get("/players", async (req, res) => {
+    try {
+        const players = await playerController.getAllPlayers();
+        res.status(200).json(players);
     } catch (error) {
         res.status(500).json({ error: error.message });
         console.log(error.message);
