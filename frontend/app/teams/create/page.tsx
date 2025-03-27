@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import axios from "axios"
 
-const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com"
 
 interface Team {
   teamName: string;
@@ -40,7 +39,7 @@ export default function CreateTeamPage() {
     e.preventDefault()
     try {
       console.log("Sending data:", formData)
-      const response = await axios.post(`${BACKEND_URL}/api/v2/teams`, formData)
+      const response = await axios.post(`${process.env.BACKEND_URL}/api/v2/teams`, formData)
       console.log("Successfully added team:", response.data)
       router.push('/teams')
       router.refresh()
@@ -70,7 +69,7 @@ export default function CreateTeamPage() {
               name === 'totalPoints'
         ? parseInt(value) || 0 
         : name === 'tournamentsPlayed' 
-          ? value.split(',').map(item => item.trim())
+          ? value.split(',').map(item => item.trim()).filter(item => item !== '')
           : value
     }))
   }

@@ -24,7 +24,6 @@ interface Venue {
   country: string;
 }
 
-const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com"
 
 // Add new Match interface after the Venue interface
 interface Match {
@@ -39,94 +38,6 @@ interface VenueWithMatches extends Venue {
   matches: Match[];
 }
 
-// Modify the static data to include matches (replace the existing staticVenues)
-const staticVenues: VenueWithMatches[] = [
-  {
-    venueId: 1,
-    venueName: "Rajiv Gandi International Stadium",
-    capacity: 100024,
-    venueLocation: "Hyderabad, Telangana",
-    surfaceType: "hybrid",
-    country: "India",
-    matches: [
-      {
-        matchId: 1,
-        homeTeam: "India",
-        awayTeam: "Australia",
-        date: "2024-01-15",
-        result: "India won by 5 wickets"
-      }
-    ]
-  },
-  {
-    venueId: 2,
-    venueName: "Eden Gardens",
-    capacity: 68000,
-    venueLocation: "Kolkata, West Bengal",
-    surfaceType: "grass",
-    country: "India",
-    matches: [
-      {
-        matchId: 1,
-        homeTeam: "India",
-        awayTeam: "Australia",
-        date: "2024-01-15",
-        result: "India won by 5 wickets"
-      }
-    ]
-  },
-  {
-    venueId: 3,
-    venueName: "Lords Cricket Ground",
-    capacity: 30000,
-    venueLocation: "London, England",
-    surfaceType: "grass",
-    country: "England",
-    matches: [
-      {
-        matchId: 1,
-        homeTeam: "India",
-        awayTeam: "Australia",
-        date: "2024-01-15",
-        result: "India won by 5 wickets"
-      }
-    ]
-  },
-  {
-    venueId: 4,
-    venueName: "Newlands Cricket Ground",
-    capacity: 25000,
-    venueLocation: "Cape Town, Western Cape",
-    surfaceType: "grass",
-    country: "South Africa",
-    matches: [
-      {
-        matchId: 1,
-        homeTeam: "India",
-        awayTeam: "Australia",
-        date: "2024-01-15",
-        result: "India won by 5 wickets"
-      }
-    ]
-  },
-  {
-    venueId: 5,
-    venueName: "Dubai International Cricket Stadium",
-    capacity: 25000,
-    venueLocation: "Dubai, UAE",
-    surfaceType: "artificial",
-    country: "UAE",
-    matches: [
-      {
-        matchId: 1,
-        homeTeam: "India",
-        awayTeam: "Australia",
-        date: "2024-01-15",
-        result: "India won by 5 wickets"
-      }
-    ]
-  }
-]
 
 // Remove all static data and modify the component
 export default function VenuesPage() {
@@ -135,7 +46,7 @@ export default function VenuesPage() {
 
   const fetchVenues = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v2/venue`);
+      const response = await axios.get(`${import.meta.env.BACKEND_URL}/api/v2/venue`);
       setVenues(response.data);
       console.log("Successfully fetched venues");
     } catch (error) {

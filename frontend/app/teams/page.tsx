@@ -4,10 +4,19 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { Users } from "lucide-react"
+import { Users, Search, Trash2 } from "lucide-react"
 import axios from "axios"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+
 
 interface Team {
   teamId: number;
@@ -22,85 +31,45 @@ interface Team {
   totalPoints: number;
 }
 
-const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com"
 
 
 
 export default function TeamsPage() {
-  // This would be fetched from an API in a real application
   const [teams, setTeams] = useState<Team[]>([])
-  const teamsData = [
-    {
-      id: 1,
-      name: "Mumbai Mavericks",
-      owner: "Reliance Sports",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 120, lost: 80, drawn: 5 },
-      players: 25,
-    },
-    {
-      id: 2,
-      name: "Delhi Dragons",
-      owner: "GMR Group",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 110, lost: 90, drawn: 5 },
-      players: 24,
-    },
-    {
-      id: 3,
-      name: "Bangalore Bulls",
-      owner: "United Spirits",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 105, lost: 95, drawn: 5 },
-      players: 23,
-    },
-    {
-      id: 4,
-      name: "Chennai Challengers",
-      owner: "India Cements",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 115, lost: 85, drawn: 5 },
-      players: 25,
-    },
-    {
-      id: 5,
-      name: "Kolkata Kings",
-      owner: "Red Chillies Entertainment",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 100, lost: 100, drawn: 5 },
-      players: 24,
-    },
-    {
-      id: 6,
-      name: "Punjab Panthers",
-      owner: "Preity Zinta & Ness Wadia",
-      since: 2008,
-      tournaments: 15,
-      matches: { won: 95, lost: 105, drawn: 5 },
-      players: 23,
-    },
-  ]
+  const [teamToDelete, setTeamToDelete] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const fetchTeams = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v2/teams`);
+      const response = await axios.get(`${process.env.BACKEND_URL}/api/v2/teams`);
       setTeams(response.data); 
       console.log("Successfully fetched teams");
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching teams:", error);
-      console.log("Failed to fetch teams");
     }
   };
+
+  const deleteTeam = async (teamId: number) => {
+    try {
+      await axios.delete(`${process.env.BACKEND_URL}/api/v2/teams/${teamId}`);
+      await fetchTeams();
+    } catch (error) {
+      console.error("Error deleting team:", error);
+    }
+  };
+  
 
   useEffect(() => {
     fetchTeams(); 
   }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (teamToDelete !== null) {
+      await deleteTeam(teamToDelete);
+      setDialogOpen(false);
+      setTeamToDelete(null);
+    }
+  };
 
 
 
@@ -166,12 +135,47 @@ export default function TeamsPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-3">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/teams/${team.teamId}`}>Team Details</Link>
-                </Button>
-                <Button asChild variant="default" size="sm">
-                  <Link href={`/teams/${team.teamId}/players`}>View Players</Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/teams/${team.teamId}`}>Team Details</Link>
+                  </Button>
+                  <Button asChild variant="default" size="sm">
+                    <Link href={`/teams/${team.teamId}/players`}>View Players</Link>
+                  </Button>
+                </div>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setTeamToDelete(team.teamId)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete Team</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete this team? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteConfirm}
+                      >
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </CardFooter>
             </Card>
           ))}

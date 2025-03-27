@@ -7,106 +7,63 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { Award, CalendarDays, MapPin, Users, Search } from "lucide-react"
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react"
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react"
+import { Tournament } from '@/types/tournament'
+import { fetchTournaments } from '@/services/fetchtournamentService'
 
 export default function TournamentsPage() {
-  // State for search input and format filter
   const [searchQuery, setSearchQuery] = useState("")
   const [formatFilter, setFormatFilter] = useState("all")
+  const [tournaments, setTournaments] = useState<Tournament[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data for tournaments
-  const tournaments = [
-    {
-      id: 1,
-      name: "IPL 2023",
-      startDate: "Apr 1, 2023",
-      endDate: "May 30, 2023",
-      location: "Multiple venues, India",
-      teams: 10,
-      format: "T20",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "World Cup 2023",
-      startDate: "Oct 5, 2023",
-      endDate: "Nov 19, 2023",
-      location: "India",
-      teams: 10,
-      format: "ODI",
-      status: "upcoming",
-    },
-    {
-      id: 3,
-      name: "Big Bash League 2022-23",
-      startDate: "Dec 13, 2022",
-      endDate: "Feb 4, 2023",
-      location: "Australia",
-      teams: 8,
-      format: "T20",
-      status: "completed",
-    },
-    {
-      id: 4,
-      name: "The Hundred 2023",
-      startDate: "Aug 1, 2023",
-      endDate: "Aug 27, 2023",
-      location: "England",
-      teams: 8,
-      format: "100-ball",
-      status: "upcoming",
-    },
-    {
-      id: 5,
-      name: "Pakistan Super League 2023",
-      startDate: "Feb 13, 2023",
-      endDate: "Mar 19, 2023",
-      location: "Pakistan",
-      teams: 6,
-      format: "T20",
-      status: "completed",
-    },
-    {
-      id: 6,
-      name: "Caribbean Premier League 2023",
-      startDate: "Aug 31, 2023",
-      endDate: "Oct 9, 2023",
-      location: "Caribbean",
-      teams: 6,
-      format: "T20",
-      status: "upcoming",
-    },
-  ]
+  useEffect(() => {
+    const loadTournaments = async () => {
+      try {
+        const data = await fetchTournaments()
+        setTournaments(data)
+      } catch (err) {
+        setError('Failed to load tournaments')
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  // Filter tournaments based on search query and format filter
+    loadTournaments()
+  }, [])
+
   const filteredTournaments = tournaments.filter((tournament) => {
-    const matchesSearch = tournament.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFormat = formatFilter === "all" || tournament.format.toLowerCase() === formatFilter.toLowerCase()
+    const matchesSearch = tournament.tournamentName.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFormat = formatFilter === "all" || tournament.tourFormat.toLowerCase() === formatFilter.toLowerCase()
     return matchesSearch && matchesFormat
   })
 
-  // Render tournament card
-  const renderTournamentCard = (tournament: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; status: string; startDate: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; endDate: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; location: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; teams: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; format: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined }) => (
-    <Card key={tournament.id} className="border-olive/20 hover:shadow-md transition-shadow">
+  const renderTournamentCard = (tournament: Tournament) => (
+    <Card key={tournament.tournamentId} className="border-olive/20 hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-dark-olive">{tournament.name}</CardTitle>
+          <CardTitle className="text-dark-olive">{tournament.tournamentName}</CardTitle>
           <div
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              tournament.status === "active"
+              new Date(tournament.startDate) <= new Date() && new Date(tournament.endDate) >= new Date()
                 ? "bg-green-100 text-green-800"
-                : tournament.status === "upcoming"
+                : new Date(tournament.startDate) > new Date()
                   ? "bg-blue-100 text-blue-800"
                   : "bg-gray-100 text-gray-800"
             }`}
           >
-            {tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1)}
+            {new Date(tournament.startDate) <= new Date() && new Date(tournament.endDate) >= new Date()
+              ? "Active"
+              : new Date(tournament.startDate) > new Date()
+                ? "Upcoming"
+                : "Completed"}
           </div>
         </div>
         <CardDescription className="flex items-center gap-1">
           <CalendarDays className="h-4 w-4" />
           <span>
-            {tournament.startDate} - {tournament.endDate}
+            {new Date(tournament.startDate).toLocaleDateString()} - {new Date(tournament.endDate).toLocaleDateString()}
           </span>
         </CardDescription>
       </CardHeader>
@@ -114,21 +71,21 @@ export default function TournamentsPage() {
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-olive" />
-            <span>{tournament.location}</span>
+            <span>{tournament.tourLocation}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-olive" />
-            <span>{tournament.teams} Teams</span>
+            <span>{tournament.numberOfTeams} Teams</span>
           </div>
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-olive" />
-            <span>{tournament.format} Format</span>
+            <span>{tournament.tourFormat} Format</span>
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild variant="outline" size="sm" className="w-full">
-          <Link href={`/tournaments/${tournament.id}`}>View Details</Link>
+          <Link href={`/tournaments/${tournament.tournamentId}`}>View Details</Link>
         </Button>
       </CardFooter>
     </Card>
@@ -196,9 +153,13 @@ export default function TournamentsPage() {
           </TabsContent>
           <TabsContent value="active" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTournaments.filter((t) => t.status === "active").length > 0 ? (
+              {filteredTournaments.filter(t => 
+                new Date(t.startDate) <= new Date() && new Date(t.endDate) >= new Date()
+              ).length > 0 ? (
                 filteredTournaments
-                  .filter((t) => t.status === "active")
+                  .filter(t => 
+                    new Date(t.startDate) <= new Date() && new Date(t.endDate) >= new Date()
+                  )
                   .map(renderTournamentCard)
               ) : (
                 <div className="col-span-full text-center py-8">
@@ -209,9 +170,11 @@ export default function TournamentsPage() {
           </TabsContent>
           <TabsContent value="upcoming" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTournaments.filter((t) => t.status === "upcoming").length > 0 ? (
+              {filteredTournaments.filter(t => 
+                new Date(t.startDate) > new Date()
+              ).length > 0 ? (
                 filteredTournaments
-                  .filter((t) => t.status === "upcoming")
+                  .filter(t => new Date(t.startDate) > new Date())
                   .map(renderTournamentCard)
               ) : (
                 <div className="col-span-full text-center py-8">
@@ -222,9 +185,11 @@ export default function TournamentsPage() {
           </TabsContent>
           <TabsContent value="completed" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTournaments.filter((t) => t.status === "completed").length > 0 ? (
+              {filteredTournaments.filter(t => 
+                new Date(t.endDate) < new Date()
+              ).length > 0 ? (
                 filteredTournaments
-                  .filter((t) => t.status === "completed")
+                  .filter(t => new Date(t.endDate) < new Date())
                   .map(renderTournamentCard)
               ) : (
                 <div className="col-span-full text-center py-8">

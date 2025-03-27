@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +12,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
+import { Team } from '@/types/team'
+import { Venue } from '@/types/venue'
+import { fetchTeams } from '@/services/fetchTeamService'
+import { fetchVenues } from '@/services/fetchVenueService'
+import { Tournament } from '@/types/tournament'
+import { createTournament } from '@/services/createTournamentService'
 
 type Fixture = {
   team1: string;
@@ -28,8 +33,14 @@ export default function CreateTournamentPage() {
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [teams, setTeams] = useState([{ id: 1, name: "" }])
-  const [fixtures, setFixtures] = useState<Fixture[]>([])
-  const [fixtureType, setFixtureType] = useState<'group' | 'knockout'>('group')
+  const [availableTeams, setAvailableTeams] = useState<Team[]>([])
+  const [availableVenues, setAvailableVenues] = useState<Venue[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [tournamentName, setTournamentName] = useState("")
+  const [location, setLocation] = useState("")
+  const [description, setDescription] = useState("")
+  const [format, setFormat] = useState("t20")
+  const [tournamentType, setTournamentType] = useState("league")
 
   const handleAddTeam = () => {
     setTeams([...teams, { id: teams.length + 1, name: "" }])
@@ -53,29 +64,67 @@ export default function CreateTournamentPage() {
     setCurrentStep(currentStep - 1)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Form submitted")
-    router.push("/tournaments")
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const formData = {
+        tournamentName: tournamentName,
+        startDate: startDate!.toISOString().split('T')[0],
+        endDate: endDate!.toISOString().split('T')[0],
+        tourLocation: location,
+        numberOfTeams: teams.length,
+        teams: teams
+          .filter(team => team.name)
+          .map(team => team.name),
+        numberOfMatches: calculateNumberOfMatches(teams.length),
+        tourFormat: format.toString(),
+        weightage: {
+          win: parseInt((document.getElementById('winPoints') as HTMLInputElement)?.value || '2'),
+          loss: parseInt((document.getElementById('lossPoints') as HTMLInputElement)?.value || '0'),
+          draw: parseInt((document.getElementById('tiePoints') as HTMLInputElement)?.value || '1'),
+        },
+        sponsorship: [] 
+      };
 
-  const generateFixtures = () => {
-    const newFixtures = []
-    for (let i = 0; i < teams.length; i++) {
-      for (let j = i + 1; j < teams.length; j++) {
-        newFixtures.push({
-          team1: teams[i].name,
-          team2: teams[j].name,
-          date: null,
-          venue: null
-        })
+
+      if (!formData.tournamentName || !formData.startDate || !formData.endDate || 
+          !formData.tourLocation || formData.teams.length < 2) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      await createTournament(formData);
+      router.push("/tournaments");
+    } catch (error) {
+      console.error('Error creating tournament:', error);
+    }
+  };
+
+  const calculateNumberOfMatches = (numTeams: number): number => {
+    return (numTeams * (numTeams - 1)) / 2;
+  };
+
+  const steps = ["Basic Info", "Teams", "Format", "Review"];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const [teamsData, venuesData] = await Promise.all([
+          fetchTeams(),
+          fetchVenues()
+        ])
+        setAvailableTeams(teamsData)
+        setAvailableVenues(venuesData)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
-    setFixtures(newFixtures)
-  }
 
-
-
+    loadData()
+  }, [])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -90,7 +139,7 @@ export default function CreateTournamentPage() {
 
       <div className="mb-8">
         <div className="flex justify-between items-center">
-          {[1, 2, 3, 4, 5].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
               className={`flex flex-col items-center ${
@@ -109,7 +158,7 @@ export default function CreateTournamentPage() {
                 {step}
               </div>
               <span className="text-sm hidden md:block">
-                {step === 1 ? "Basic Info" : step === 2 ? "Teams" : step === 3 ? "Format" : step === 4 ? "Fixtures" : "Review"}
+                {step === 1 ? "Basic Info" : step === 2 ? "Teams" : step === 3 ? "Format" : "Review"}
               </span>
             </div>
           ))}
@@ -117,7 +166,7 @@ export default function CreateTournamentPage() {
         <div className="w-full bg-olive/20 h-1 mt-4 rounded-full">
           <div
             className="bg-light-teal h-1 rounded-full transition-all"
-            style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
           ></div>
         </div>
       </div>
@@ -133,7 +182,13 @@ export default function CreateTournamentPage() {
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Tournament Name</Label>
-                  <Input id="name" placeholder="Enter tournament name" required />
+                  <Input 
+                    id="name" 
+                    placeholder="Enter tournament name" 
+                    required 
+                    value={tournamentName}
+                    onChange={(e) => setTournamentName(e.target.value)}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -153,12 +208,24 @@ export default function CreateTournamentPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="location">Tournament Location</Label>
-                  <Input id="location" placeholder="Enter location" required />
+                  <Input 
+                    id="location" 
+                    placeholder="Enter location" 
+                    required 
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Enter tournament description" rows={4} />
+                  <Textarea 
+                    id="description" 
+                    placeholder="Enter tournament description" 
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -181,7 +248,7 @@ export default function CreateTournamentPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Teams</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddTeam} className="text-dark-olive">
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddTeam}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Team
                   </Button>
@@ -189,19 +256,30 @@ export default function CreateTournamentPage() {
 
                 {teams.map((team) => (
                   <div key={team.id} className="flex items-center gap-2">
-                    <Input
-                      placeholder={`Team ${team.id} name`}
+                    <Select
                       value={team.name}
-                      onChange={(e) => handleTeamNameChange(team.id, e.target.value)}
-                      required
-                    />
+                      onValueChange={(value) => handleTeamNameChange(team.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select team" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTeams.map((availableTeam) => (
+                          <SelectItem 
+                            key={availableTeam.teamId} 
+                            value={availableTeam.teamName}
+                          >
+                            {availableTeam.teamName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveTeam(team.id)}
                       disabled={teams.length === 1}
-                      className="text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -232,7 +310,10 @@ export default function CreateTournamentPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="format">Match Format</Label>
-                  <Select defaultValue="t20">
+                  <Select 
+                    value={format} 
+                    onValueChange={setFormat}
+                  >
                     <SelectTrigger id="format">
                       <SelectValue placeholder="Select format" />
                     </SelectTrigger>
@@ -247,7 +328,10 @@ export default function CreateTournamentPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="tournamentType">Tournament Type</Label>
-                  <Select defaultValue="league">
+                  <Select 
+                    value={tournamentType} 
+                    onValueChange={setTournamentType}
+                  >
                     <SelectTrigger id="tournamentType">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -322,193 +406,6 @@ export default function CreateTournamentPage() {
         {currentStep === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>Fixtures</CardTitle>
-              <CardDescription>Set up group stage and knockout matches</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <Tabs defaultValue="group" className="w-full" onValueChange={(value) => setFixtureType(value as 'group' | 'knockout')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="group">Group Stage</TabsTrigger>
-                  <TabsTrigger value="knockout">Knockout Stage</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="group" className="space-y-4">
-                  {fixtures.length === 0 ? (
-                    <div className="text-center py-4">
-                      <Button 
-                        type="button" 
-                        onClick={generateFixtures}
-                        className="text-dark-olive"
-                      >
-                        Generate Group Stage Fixtures
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="text-sm text-olive mb-4">Group Stage Matches</div>
-                      {fixtures.map((fixture, index) => (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
-                          <div className="flex items-center justify-center text-center">
-                            <span className="font-medium">{fixture.team1}</span>
-                            <span className="mx-3">vs</span>
-                            <span className="font-medium">{fixture.team2}</span>
-                          </div>
-                          <div>
-                            <Label>Match Date</Label>
-                            <DatePicker 
-                              selected={fixture.date || undefined}
-                              onSelect={(date) => {
-                                const newFixtures = [...fixtures];
-                                newFixtures[index].date = date || null;
-                                setFixtures(newFixtures);
-                              }}
-                              disabled={(date) => date < (startDate || new Date()) || date > (endDate || new Date(2100, 0, 1))}
-                            />
-                          </div>
-                          <div>
-                            <Label>Venue</Label>
-                            <Input
-                              placeholder="Enter venue"
-                              value={fixture.venue || ''}
-                              onChange={(e) => {
-                                const newFixtures = [...fixtures];
-                                newFixtures[index].venue = e.target.value;
-                                setFixtures(newFixtures);
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="knockout" className="space-y-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="text-sm text-olive">Knockout Stage Matches</div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setFixtures([...fixtures, {
-                          team1: '',
-                          team2: '',
-                          date: null,
-                          venue: null
-                        }])
-                      }}
-                      className="text-dark-olive"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Knockout Match
-                    </Button>
-                  </div>
-
-                  {fixtures.filter(f => f.team1 === '' || f.team2 === '').map((fixture, index) => (
-                    <div key={`knockout-${index}`} className="grid grid-cols-1 gap-4 p-4 border rounded-md">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Team 1</Label>
-                          <Select
-                            value={fixture.team1}
-                            onValueChange={(value) => {
-                              const newFixtures = [...fixtures];
-                              const targetIndex = fixtures.indexOf(fixture);
-                              newFixtures[targetIndex] = { ...fixture, team1: value };
-                              setFixtures(newFixtures);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select team" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {teams.map((team) => (
-                                <SelectItem key={team.id} value={team.name}>
-                                  {team.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Team 2</Label>
-                          <Select
-                            value={fixture.team2}
-                            onValueChange={(value) => {
-                              const newFixtures = [...fixtures];
-                              const targetIndex = fixtures.indexOf(fixture);
-                              newFixtures[targetIndex] = { ...fixture, team2: value };
-                              setFixtures(newFixtures);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select team" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {teams.map((team) => (
-                                <SelectItem key={team.id} value={team.name}>
-                                  {team.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Match Date</Label>
-                          <DatePicker 
-                            selected={fixture.date || undefined}
-                            onSelect={(date) => {
-                              const newFixtures = [...fixtures];
-                              const targetIndex = fixtures.indexOf(fixture);
-                              newFixtures[targetIndex] = { ...fixture, date: date || null };
-                              setFixtures(newFixtures);
-                            }}
-                            disabled={(date) => date < (startDate || new Date()) || date > (endDate || new Date(2100, 0, 1))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Venue</Label>
-                          <Input
-                            placeholder="Enter venue"
-                            value={fixture.venue || ''}
-                            onChange={(e) => {
-                              const newFixtures = [...fixtures];
-                              const targetIndex = fixtures.indexOf(fixture);
-                              newFixtures[targetIndex] = { ...fixture, venue: e.target.value };
-                              setFixtures(newFixtures);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button type="button" variant="outline" onClick={handlePrevious}>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous
-              </Button>
-              <Button 
-                type="button" 
-                onClick={handleNext}
-                disabled={fixtures.length === 0}
-              >
-                Next
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-
-        {currentStep === 5 && (
-          <Card>
-            <CardHeader>
               <CardTitle>Review & Create</CardTitle>
               <CardDescription>Review the tournament details before creating</CardDescription>
             </CardHeader>
@@ -517,21 +414,23 @@ export default function CreateTournamentPage() {
                 <h3 className="font-medium text-dark-olive">Tournament Information</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="text-olive">Tournament Name:</div>
-                  <div>IPL 2023</div>
+                  <div>{tournamentName || "Not set"}</div>
                   <div className="text-olive">Start Date:</div>
                   <div>{startDate?.toLocaleDateString() || "Not set"}</div>
                   <div className="text-olive">End Date:</div>
                   <div>{endDate?.toLocaleDateString() || "Not set"}</div>
                   <div className="text-olive">Location:</div>
-                  <div>Multiple venues, India</div>
+                  <div>{location || "Not set"}</div>
+                  <div className="text-olive">Description:</div>
+                  <div>{description || "Not set"}</div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <h3 className="font-medium text-dark-olive">Teams</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  {teams.map((team) => (
-                    <div key={team.id}>{team.name || `Team ${team.id}`}</div>
+                  {teams.map((team, index) => (
+                    <div key={team.id}>{team.name || `Not selected`}</div>
                   ))}
                 </div>
               </div>
@@ -540,11 +439,16 @@ export default function CreateTournamentPage() {
                 <h3 className="font-medium text-dark-olive">Format</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="text-olive">Match Format:</div>
-                  <div>T20</div>
+                  <div>{format || "Not set"}</div>
                   <div className="text-olive">Tournament Type:</div>
-                  <div>League</div>
+                  <div>{tournamentType || "Not set"}</div>
                   <div className="text-olive">Points System:</div>
-                  <div>Default (Win: 2, Tie: 1, Loss: 0)</div>
+                  <div>
+                    Win: {(document.getElementById('winPoints') as HTMLInputElement)?.value || "2"}, 
+                    Tie: {(document.getElementById('tiePoints') as HTMLInputElement)?.value || "1"}, 
+                    Loss: {(document.getElementById('lossPoints') as HTMLInputElement)?.value || "0"},
+                    Bonus: {(document.getElementById('bonusPoints') as HTMLInputElement)?.value || "0"}
+                  </div>
                 </div>
               </div>
             </CardContent>
