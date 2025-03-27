@@ -265,13 +265,15 @@ function addMatch(tournamentId, data) {
 
 function addMatches(tournamentId, data) {
     return new Promise((resolve, reject) => {
+        let dataArray = Array.isArray(data) ? data : [data];
+
         let sql = `
             INSERT INTO Matches
             (tournamentId, team1Id, team2Id, venueId, matchDate)
             VALUES ?
         `;
         
-        let values = data.map(match => [
+        let values = dataArray.map(match => [
             tournamentId,
             match.team1Id,
             match.team2Id,
