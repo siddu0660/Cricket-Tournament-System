@@ -42,6 +42,7 @@ userRouter.get("/teams", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -51,6 +52,7 @@ userRouter.get("/teamsTournament/:id", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -63,6 +65,7 @@ userRouter.get("/teams/:id", async (req, res) => {
         res.status(200).json(team);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -72,6 +75,7 @@ userRouter.get("/teams/:id/tournaments", async (req, res) => {
         res.status(200).json(tournaments);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -81,6 +85,7 @@ userRouter.get("/venue", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -93,6 +98,7 @@ userRouter.get("/venue/:id", async (req, res) => {
         res.status(200).json(venue);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -102,6 +108,7 @@ userRouter.get("/venue/:id/checkAvailability?date=:date", async (req, res) => {
         res.status(200).json({ available: isAvailable });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -111,6 +118,7 @@ userRouter.get("/tournaments", async (req, res) => {
         res.status(200).json(tournaments);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -123,6 +131,7 @@ userRouter.get("/tournaments/:id", async (req, res) => {
         res.status(200).json(tournament);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -132,6 +141,7 @@ userRouter.get("/tournaments/:id/matches", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -146,6 +156,7 @@ adminRouter.get("/teams", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -157,6 +168,7 @@ adminRouter.get("/teamsTournament/:id", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -169,6 +181,7 @@ adminRouter.get("/teams/:id", async (req, res) => {
         res.status(200).json(team);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -181,6 +194,7 @@ adminRouter.post("/teams", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -190,6 +204,7 @@ adminRouter.put("/teams/:id", async (req, res) => {
         res.status(200).json({ message: "Team updated successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -199,6 +214,7 @@ adminRouter.delete("/teams/:id", async (req, res) => {
         res.status(200).json({ message: "Team deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -208,6 +224,7 @@ adminRouter.get("/venue", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -220,6 +237,7 @@ adminRouter.get("/venue/:id", async (req, res) => {
         res.status(200).json(venue);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -229,6 +247,7 @@ adminRouter.get("/venue/:id/checkAvailability?date=:date", async (req, res) => {
         res.status(200).json({ available: isAvailable });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -241,6 +260,7 @@ adminRouter.post("/venue", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -250,6 +270,7 @@ adminRouter.put("/venue/:id", async (req, res) => {
         res.status(200).json({ message: "Venue updated successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -259,6 +280,7 @@ adminRouter.delete("/venue/:id", async (req, res) => {
         res.status(200).json({ message: "Venue deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -268,6 +290,7 @@ adminRouter.get("/tournaments", async (req, res) => {
         res.status(200).json(tournaments);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -280,6 +303,7 @@ adminRouter.get("/tournaments/:id", async (req, res) => {
         res.status(200).json(tournament);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -289,6 +313,7 @@ adminRouter.get("/tournaments/:id/matches", async (req, res) => {
         res.status(200).json(teams);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -304,6 +329,7 @@ adminRouter.post("/tournaments", async (req, res) => {
         console.log(result.insertId);
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -313,6 +339,7 @@ adminRouter.put("/tournaments/:name", async (req, res) => {
         res.status(200).json({ message: "Tournament updated successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -322,6 +349,7 @@ adminRouter.delete("/tournaments/:id", async (req, res) => {
         res.status(200).json({ message: "Tournament deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
@@ -335,6 +363,7 @@ adminRouter.post("/matchesTournament/:id", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 
