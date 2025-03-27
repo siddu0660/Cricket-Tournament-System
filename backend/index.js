@@ -3,7 +3,7 @@ const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const { teamController, venueController, tournamentController, matchController } = require("./controller/user");
+const { teamController, venueController, tournamentController, matchController, playerController } = require("./controller/user");
 const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController } = require("./controller/admin");
 
 require("dotenv").config();
