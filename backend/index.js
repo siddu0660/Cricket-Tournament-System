@@ -482,7 +482,7 @@ adminRouter.get("/players/team/:id", async (req, res) => {
 });
 
 
-userRouter.post("/players", async (req, res) => {
+adminRouter.post("/players", async (req, res) => {
     try {
         const newPlayer = req.body;
         const result = await playerAdminController.addPlayer(newPlayer);
