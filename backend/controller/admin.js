@@ -409,19 +409,6 @@ function addPlayer(data) {
     });
 }
 
-function getPlayerById(playerId) {
-    return new Promise((resolve, reject) => {
-        const sql = "SELECT * FROM Player WHERE playerId = ?";
-        db.query(sql, [playerId], (err, result) => {
-        if (err) {
-            reject(err);
-        } else {
-            resolve(result[0]);
-        }
-        });
-    });
-}
-
 function updatePlayer(playerId, data) {
     return new Promise((resolve, reject) => {
         if (Object.keys(data).length === 0) {
@@ -497,7 +484,6 @@ const matchAdminController = {
 
 const playerAdminController = {
     addPlayer,
-    getPlayerById,
     updatePlayer,
     deletePlayer
 }

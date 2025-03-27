@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController, matchController, playerController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
@@ -187,6 +187,33 @@ userRouter.get("/players", async (req, res) => {
         console.log(error.message);
     }
 });
+
+userRouter.get("/players/:id", async (req, res) => {
+    try {
+        const player = await playerController.getPlayerById(req.params.id);
+        if (!player) {
+            return res.status(404).json({ error: "Player not found" });
+        }
+        res.status(200).json(player);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+userRouter.get("/players/team/:id", async (req, res) => {
+    try {
+        const players = await playerController.getPlayersByTeam(req.params.id);
+        if (!players || players.length === 0) {
+            return res.status(404).json({ error: "No players found for this team" });
+        }
+        res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
 // Admin Routes
 
 const adminRouter = express.Router();
@@ -422,6 +449,70 @@ adminRouter.get("/players", async (req, res) => {
     try {
         const players = await playerController.getAllPlayers();
         res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.get("/players/:id", async (req, res) => {
+    try {
+        const player = await playerController.getPlayerById(req.params.id);
+        if (!player) {
+            return res.status(404).json({ error: "Player not found" });
+        }
+        res.status(200).json(player);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.get("/players/team/:id", async (req, res) => {
+    try {
+        const players = await playerController.getPlayersByTeam(req.params.id);
+        if (!players || players.length === 0) {
+            return res.status(404).json({ error: "No players found for this team" });
+        }
+        res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+
+userRouter.post("/players", async (req, res) => {
+    try {
+        const newPlayer = req.body;
+        const result = await playerAdminController.addPlayer(newPlayer);
+        res.status(201).json({
+            message: "Player added successfully",
+            playerId: result.insertId,
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.put("/players/:id", async (req, res) => {
+    try {
+        const playerId = req.params.id;
+        const updatedData = req.body;
+        await playerAdminController.updatePlayer(playerId, updatedData);
+        res.status(200).json({ message: "Player updated successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.delete("/players/:id", async (req, res) => {
+    try {
+        const playerId = req.params.id;
+        await playerAdminController.deletePlayer(playerId);
+        res.status(200).json({ message: "Player deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
         console.log(error.message);
