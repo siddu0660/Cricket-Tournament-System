@@ -381,12 +381,11 @@ function addPlayer(data) {
         const sql = `
                 INSERT INTO Player 
                 (firstName, secondName, dateOfBirth, jerseyNumber, playerRole, 
-                battingStyle, bowlingStyle, gender, nationality, teamsPlayed)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                battingStyle, bowlingStyle, gender, nationality)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
         const jerseyNumberArray = JSON.parse(data.jerseyNumber);
-        const teamsPlayedArray = JSON.parse(data.teamsPlayed);
 
         const values = [
         data.firstName,
@@ -398,7 +397,6 @@ function addPlayer(data) {
         data.bowlingStyle,
         data.gender,
         data.nationality,
-        JSON.stringify(teamsPlayedArray || []),
         ];
 
         db.query(sql, values, (err, result) => {
