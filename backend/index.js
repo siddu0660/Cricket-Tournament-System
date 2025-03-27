@@ -297,6 +297,8 @@ adminRouter.post("/tournaments", async (req, res) => {
         message: "Tournament created successfully",
         tournamentId: result.insertId,
         });
+        console.log(result);
+        console.log(result.insertId);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
