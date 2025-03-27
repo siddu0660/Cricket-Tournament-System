@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import axios from "axios";
 
-const BACKEND_URL = "https://cricket-tournament-system-1.onrender.com";
 
 export default function CreateVenuePage() {
   const router = useRouter();
@@ -41,7 +40,7 @@ export default function CreateVenuePage() {
         capacity: parseInt(formData.capacity)
       };
 
-      await axios.post(`${BACKEND_URL}/api/v2/venue`, payload);
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/venue`, payload);
       router.push('/venues');
     } catch (error) {
       setError("Failed to create venue. Please try again.");

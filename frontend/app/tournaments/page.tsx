@@ -10,6 +10,12 @@ import { Award, CalendarDays, MapPin, Users, Search } from "lucide-react"
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState, useEffect } from "react"
 import { Tournament } from '@/types/tournament'
 import { fetchTournaments } from '@/services/fetchtournamentService'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Venue } from '@/types/venue'
+import { fetchVenues } from '@/services/fetchVenueService'
+import { Team } from '@/types/tour'
+import { fetchTournamentTeams, generateGroupFixtures } from '@/services/teamService'
+import { Fixture } from '@/types/tour'
 
 export default function TournamentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -17,6 +23,12 @@ export default function TournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [tournamentTeams, setTournamentTeams] = useState<Team[]>([])
+  const [generatedFixtures, setGeneratedFixtures] = useState<Fixture[]>([])
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [selectedVenue, setSelectedVenue] = useState<string>('')
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false)
 
   useEffect(() => {
     const loadTournaments = async () => {
@@ -30,8 +42,49 @@ export default function TournamentsPage() {
       }
     }
 
+    const loadVenues = async () => {
+      try {
+        const venueData = await fetchVenues()
+        setVenues(venueData)
+      } catch (err) {
+        setError('Failed to load venues')
+      }
+    }
+
     loadTournaments()
+    loadVenues()
   }, [])
+
+  const fetchTeams = async (tournamentName: string) => {
+    try {
+      setIsLoadingTeams(true)
+      setError(null)
+      
+      console.log('Fetching teams for tournament:', tournamentName)
+      const data = await fetchTournamentTeams(tournamentName)
+      console.log('Fetched teams data:', data)
+      
+      const teams = Array.isArray(data) ? data : data.teams
+      
+      if (!teams || !Array.isArray(teams)) {
+        throw new Error('Invalid teams data received')
+      }
+      
+      if (teams.length === 0) {
+        throw new Error('No teams found for this tournament')
+      }
+      
+      setTournamentTeams(teams)
+      return teams
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch teams'
+      console.error('Failed to fetch teams:', errorMessage)
+      setError(errorMessage)
+      throw error
+    } finally {
+      setIsLoadingTeams(false)
+    }
+  }
 
   const filteredTournaments = tournaments.filter((tournament) => {
     const matchesSearch = tournament.tournamentName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,10 +136,198 @@ export default function TournamentsPage() {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Button asChild variant="outline" size="sm" className="w-full">
           <Link href={`/tournaments/${tournament.tournamentId}`}>View Details</Link>
         </Button>
+        
+        <Dialog onOpenChange={(open) => {
+          if (open) {
+            setGeneratedFixtures([]);
+            setTournamentTeams([]);
+            setError(null);
+          }
+        }}>
+          <DialogTrigger asChild>
+            <Button variant="secondary" size="sm" className="w-full">
+              Manage Fixtures
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Manage Tournament Fixtures - {tournament.tournamentName}</DialogTitle>
+            </DialogHeader>
+            <Tabs defaultValue="group" className="w-full">
+              <TabsList>
+                <TabsTrigger value="group">Group Matches</TabsTrigger>
+                <TabsTrigger value="knockout">Knockout Matches</TabsTrigger>
+              </TabsList>
+              <TabsContent value="group">
+                <div className="space-y-4">
+                  <Button 
+                    className="w-full"
+                    disabled={isLoadingTeams}
+                    onClick={async () => {
+                      if (tournament.tournamentName) {
+                        try {
+                          setError(null);
+                          setGeneratedFixtures([]);
+                          const teams = await fetchTeams(tournament.tournamentName);
+                          console.log('Teams fetched for', tournament.tournamentName, ':', teams);
+
+                          if (!teams || teams.length < 2) {
+                            setError('Need at least 2 teams to generate fixtures');
+                            return;
+                          }
+
+                          const fixtures = generateGroupFixtures(teams);
+                          console.log('Fixtures generated for', tournament.tournamentName, ':', fixtures);
+
+                          if (fixtures.length === 0) {
+                            setError('Failed to generate fixtures');
+                            return;
+                          }
+
+                          setGeneratedFixtures(fixtures);
+                        } catch (error) {
+                          console.error('Error:', error);
+                          setError(error instanceof Error ? error.message : 'Failed to generate fixtures');
+                        }
+                      }
+                    }}
+                  >
+                    {isLoadingTeams ? 'Loading Teams...' : 'Generate Group Fixtures'}
+                  </Button>
+
+                  {tournamentTeams.length > 0 && (
+                    <div className="mt-2 text-sm text-gray-500">
+                      Teams loaded: {tournamentTeams.length}
+                    </div>
+                  )}
+
+                  {isLoadingTeams && (
+                    <div className="mt-4 text-center">
+                      <p>Loading teams...</p>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="p-4 mt-4 text-sm text-red-800 bg-red-100 rounded-md">
+                      {error}
+                    </div>
+                  )}
+
+                  {generatedFixtures.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold mb-2">Generated Fixtures ({generatedFixtures.length})</h3>
+                      <div className="space-y-4">
+                        {generatedFixtures.map((fixture, index) => (
+                          <div key={fixture.fixtureId} className="p-4 border rounded">
+                            <div className="flex items-center justify-between gap-4">
+                              <p className="font-medium">Match {index + 1}</p>
+                              <p className="font-medium">{fixture.team1.teamName} vs {fixture.team2.teamName}</p>
+                              <div className="flex gap-4">
+                                <div className="w-48">
+                                  <Select
+                                    value={fixture.venueId?.toString()}
+                                    onValueChange={(value) => {
+                                      const updatedFixtures = [...generatedFixtures]
+                                      updatedFixtures[index] = {
+                                        ...updatedFixtures[index],
+                                        venueId: parseInt(value)
+                                      }
+                                      setGeneratedFixtures(updatedFixtures)
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select venue" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {venues.map((venue) => (
+                                        <SelectItem key={venue.venueId} value={venue.venueId.toString()}>
+                                          {venue.venueName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <Input 
+                                  type="datetime-local"
+                                  className="w-48"
+                                  value={fixture.matchDate}
+                                  onChange={(e) => {
+                                    const updatedFixtures = [...generatedFixtures]
+                                    updatedFixtures[index] = {
+                                      ...updatedFixtures[index],
+                                      matchDate: e.target.value
+                                    }
+                                    setGeneratedFixtures(updatedFixtures)
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              <TabsContent value="knockout">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Match Date</label>
+                      <Input type="datetime-local" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Venue</label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select venue" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {venues.map((venue) => (
+                            <SelectItem key={venue.venueId} value={venue.venueId.toString()}>
+                              {venue.venueName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Team 1</label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Add tournament teams here */}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Team 2</label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Add tournament teams here */}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button className="w-full">
+                    Add Knockout Match
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   )
