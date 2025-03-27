@@ -133,7 +133,19 @@ function getTournamentById(tournamentId) {
 
 function getMatchesByTournament(tournamentId) {
   return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM Matches WHERE tournamentId = ?";
+    const sql = `
+      SELECT 
+        M.*,
+        Team1.teamName AS team1Name,
+        Team2.teamName AS team2Name,
+        V.venueName
+      FROM Matches M
+      INNER JOIN Team Team1 ON M.team1Id = Team1.teamId
+      INNER JOIN Team Team2 ON M.team2Id = Team2.teamId
+      INNER JOIN Venue V ON M.venueId = V.venueId
+      WHERE M.tournamentId = ?
+    `;
+
     db.query(sql, [tournamentId], (err, results) => {
       if (err) {
         reject(err);
@@ -240,6 +252,49 @@ function getPlayersByTeam(teamId) {
 //getPlayerMatchStats
 //getPlayerTournamentStats
 
+// -------------------------------- //
+
+// Squads
+
+function getAllSquads() {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Squad";
+    db.query(sql, (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
+function getSquadById(squadId) {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Squad WHERE squadId = ?";
+    db.query(sql, [squadId], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result[0]);
+      }
+    });
+  });
+}
+
+function getSquadsByTournament(tournamentId) {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM Squad WHERE tournamentId = ?";
+    db.query(sql, [tournamentId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+
 const teamController = {
     getAllTeams,
     getTeamsByTournament,
@@ -271,10 +326,17 @@ const playerController = {
     getPlayersByTeam
 }
 
+const squadController = {
+    getAllSquads,
+    getSquadById,
+    getSquadsByTournament
+}
+
 module.exports = {
     teamController,
     venueController,
     tournamentController,
     matchController,
-    playerController
+    playerController,
+    squadController
 };
