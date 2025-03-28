@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController, matchController, playerController, squadController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
@@ -665,6 +665,19 @@ adminRouter.delete("/squads/:id", async (req, res) => {
         console.log("Squad Id for delete: ", req.params.id);
         await squadAdminController.deleteSquad(req.params.id);
         res.status(200).json({ message : "Squad Added successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.post("/matchStatistics", async (req, res) => {
+    try {
+        const matchId = req.data.matchId;
+        const teamId = req.data.teamId;
+        console.log("Data for Match Statistics : ", data);
+        await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
+        res.status(200).json({ message : "Match Statistics Added successfully"});
     } catch (error) {
         res.status(500).json({ error : error.message });
         console.log(error.message);

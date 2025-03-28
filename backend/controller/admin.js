@@ -533,6 +533,42 @@ function deleteSquad(squadId) {
     });
 }
 
+function handleAddMatchStatistics(matchId, teamId) {
+    return new Promise((resolve, reject) => {
+        const checkSql = `
+            SELECT matchStatisticsId FROM MatchStatistics 
+            WHERE matchId = ? AND teamId = ?
+        `;
+        
+        const checkValues = [matchId, teamId];
+
+        db.query(checkSql, checkValues, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+
+            if (results.length > 0) {
+                resolve(results[0].id);
+            } else {
+                const insertSql = `
+                    INSERT INTO MatchStatistics (matchId, teamId)
+                    VALUES (?, ?)
+                `;
+                
+                const insertValues = [matchId, teamId];
+
+                db.query(insertSql, insertValues, (insertErr, insertResult) => {
+                    if (insertErr) {
+                        reject(insertErr);
+                    } else {
+                        resolve(insertResult.insertId);
+                    }
+                });
+            }
+        });
+    });
+}
+
 const teamAdminController = {
     addTeam,
     updateTeam,
@@ -572,11 +608,16 @@ const squadAdminController = {
     deleteSquad
 }
 
+const matchStatisticsAdminController = {
+    handleAddMatchStatistics
+}
+
 module.exports = {
     teamAdminController,
     venueAdminController,
     tournamentAdminController,
     matchAdminController,
     playerAdminController,
-    squadAdminController
+    squadAdminController,
+    matchStatisticsAdminController
 }
