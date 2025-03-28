@@ -723,7 +723,7 @@ adminRouter.post("/playerMatchStatistics", async (req, res) => {
 
 adminRouter.put("/playerMatchStatistics/:id", async (req, res) => {
     try {
-        const playerMatchStatisticId = req.params.id;
+        const playerMatchStatisticId = req.params.playerMatchStatisticId;
         const updateData = req.body;
         console.log("Updating Player Match Statistics for ID:", playerMatchStatisticId);
         console.log("Update data:", updateData);
