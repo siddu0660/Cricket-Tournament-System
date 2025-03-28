@@ -331,7 +331,10 @@ async function getPlayersBySquad(teamId, tournamentId) {
     }
 
     const squadDetails = await getSquadById(squadId);
-    return squadDetails.players;
+    return {
+      players: squadDetails.players,
+      squadId: squadId,
+    }
   } catch (error) {
     console.error("Error:", error);
     throw error;
