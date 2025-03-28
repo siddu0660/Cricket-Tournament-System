@@ -3,7 +3,7 @@ const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const { teamController, venueController, tournamentController, matchController, playerController, squadController } = require("./controller/user");
+const { teamController, venueController, tournamentController, matchController, playerController, squadController, matchStatisticsController } = require("./controller/user");
 const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController, playerMatchStatisticsAdminController } = require("./controller/admin");
 
 require("dotenv").config();
@@ -254,6 +254,18 @@ userRouter.get("/squads/tournament/:id", async (req, res) => {
         console.log(error.message);
     }
 });
+
+userRouter.get("/squads/players", async (req, res) => {
+    try {
+        const teamId = req.body.teamId;
+        const tournamentId = req.body.tournamentId;
+        const players = await squadController.getPlayerBySquad(teamId, tournamentId);
+        res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
 
 // Admin Routes
 
@@ -667,6 +679,18 @@ adminRouter.delete("/squads/:id", async (req, res) => {
         res.status(200).json({ message : "Squad Added successfully"});
     } catch (error) {
         res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.get("/squads/players", async (req, res) => {
+    try {
+        const teamId = req.body.teamId;
+        const tournamentId = req.body.tournamentId;
+        const players = await squadController.getPlayerBySquad(teamId, tournamentId);
+        res.status(200).json(players);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
         console.log(error.message);
     }
 })

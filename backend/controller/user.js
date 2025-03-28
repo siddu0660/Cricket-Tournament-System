@@ -232,6 +232,18 @@ function getMatchesByTeam(teamId, tournamentId) {
   });
 }
 
+function getMatchStatsId(matchId, teamId) {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM MatchStatistics WHERE matchId = ? AND teamId = ?";
+    db.query(sql, [matchId, teamId], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result[0]);
+      }
+    });
+  });
+}
 //getMatchScoreCard
 //getMatchStats
 
@@ -275,6 +287,40 @@ function getPlayersByTeam(teamId) {
       }
     });
   });
+}
+
+function getSquadIdByTeamAndTournament(teamId, tournamentId) {
+  return new Promise((resolve, reject) => {
+    const sql =
+      "SELECT squadId FROM Squad WHERE teamId = ? AND tournamentId = ?";
+    db.query( sql, [teamId,tournamentId], (err, results) => {
+        if (err) {
+          reject(err);
+        } else if (results.length > 0) {
+          const squadId = results[0].squadId;
+          resolve(squadId);
+        } else {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+async function getPlayersBySquad(teamId, tournamentId) {
+  try {
+    const squadId = await getSquadIdByTeamAndTournament(teamId, tournamentId);
+
+    if (!squadId) {
+      return null;
+    }
+
+    const squadDetails = await getSquadById(squadId);
+    return squadDetails.players;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
 }
 
 //getPlayersStats
@@ -449,19 +495,6 @@ async function getSquadById(squadId) {
   }
 }
 
-// function getSquadsByTournament(tournamentId) {
-//   return new Promise((resolve, reject) => {
-//     const sql = "SELECT * FROM Squad WHERE tournamentId = ?";
-//     db.query(sql, [tournamentId], (err, results) => {
-//       if (err) {
-//         reject(err);
-//       } else {
-//         resolve(results);
-//       }
-//     });
-//   });
-// }
-
 async function getSquadsByTournament(tournamentId) {
   try {
     const squadQuery = `
@@ -578,7 +611,12 @@ const playerController = {
 const squadController = {
     getAllSquads,
     getSquadById,
-    getSquadsByTournament
+    getSquadsByTournament,
+    getPlayersBySquad
+}
+
+const matchStatisticsController = {
+    getMatchStatsId
 }
 
 module.exports = {
@@ -587,5 +625,6 @@ module.exports = {
     tournamentController,
     matchController,
     playerController,
-    squadController
+    squadController,
+    matchStatisticsController
 };
