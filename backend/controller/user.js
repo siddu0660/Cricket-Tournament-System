@@ -274,7 +274,7 @@ function getPlayersByTeam(teamId) {
 async function getAllSquads() {
   try {
     const squadQuery = `
-      SELECT s.*, t.teamName, tn.tournamentName 
+      SELECT s.*, t.teamName, tn.tournamentName, t.matchesWon, t.matchesLost, t.matchesDrawn
       FROM Squad s
       JOIN Team t ON s.teamId = t.teamId
       JOIN Tournament tn ON s.tournamentId = tn.tournamentId
@@ -332,12 +332,15 @@ async function getAllSquads() {
       tournamentId: squad.tournamentId,
       teamName: squad.teamName,
       tournamentName: squad.tournamentName,
+      matchesWon: squad.matchesWon,
+      matchesLost: squad.matchesLost,
+      matchesDrawn: squad.matchesDrawn,
       players: squad.players
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? `${player.name} (ID: ${player.id})`
-            : `Unknown Player (ID: ${playerId})`;
+            ? `${player.id}, ${player.name}`
+            : `${playerId} - Unknown Player`;
         })
         .filter(Boolean),
     }));
@@ -350,7 +353,7 @@ async function getAllSquads() {
 async function getSquadById(squadId) {
   try {
     const squadQuery = `
-      SELECT s.*, t.teamName, tn.tournamentName 
+      SELECT s.*, t.teamName, tn.tournamentName, t.matchesWon, t.matchesLost, t.matchesDrawn
       FROM Squad s
       JOIN Team t ON s.teamId = t.teamId
       JOIN Tournament tn ON s.tournamentId = tn.tournamentId
@@ -389,6 +392,9 @@ async function getSquadById(squadId) {
         tournamentId: squad.tournamentId,
         teamName: squad.teamName,
         tournamentName: squad.tournamentName,
+        matchesWon: squad.matchesWon,
+        matchesLost: squad.matchesLost,
+        matchesDrawn: squad.matchesDrawn,
         players: [],
       };
     }
@@ -411,12 +417,15 @@ async function getSquadById(squadId) {
       tournamentId: squad.tournamentId,
       teamName: squad.teamName,
       tournamentName: squad.tournamentName,
+      matchesWon: squad.matchesWon,
+      matchesLost: squad.matchesLost,
+      matchesDrawn: squad.matchesDrawn,
       players: squad.players
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? `${player.name} (ID: ${player.id})`
-            : `Unknown Player (ID: ${playerId})`;
+            ? `${player.id}, ${player.name}`
+            : `${playerId} - Unknown Player`;
         })
         .filter(Boolean),
     };
@@ -426,17 +435,102 @@ async function getSquadById(squadId) {
   }
 }
 
-function getSquadsByTournament(tournamentId) {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM Squad WHERE tournamentId = ?";
-    db.query(sql, [tournamentId], (err, results) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(results);
-      }
+// function getSquadsByTournament(tournamentId) {
+//   return new Promise((resolve, reject) => {
+//     const sql = "SELECT * FROM Squad WHERE tournamentId = ?";
+//     db.query(sql, [tournamentId], (err, results) => {
+//       if (err) {
+//         reject(err);
+//       } else {
+//         resolve(results);
+//       }
+//     });
+//   });
+// }
+
+async function getSquadsByTournament(tournamentId) {
+  try {
+    const squadQuery = `
+      SELECT s.*, t.teamName, tn.tournamentName, t.matchesWon, t.matchesLost, t.matchesDrawn
+      FROM Squad s
+      JOIN Team t ON s.teamId = t.teamId
+      JOIN Tournament tn ON s.tournamentId = tn.tournamentId
+      WHERE s.tournamentId = ?
+    `;
+
+    const squads = await new Promise((resolve, reject) => {
+      db.query(squadQuery, [tournamentId], (err, results) => {
+        err ? reject(err) : resolve(results);
+      });
     });
-  });
+
+    if (squads.length === 0) return null;
+
+    const squad = squads[0];
+
+    try {
+      squad.players =
+        typeof squad.players === "string"
+          ? JSON.parse(squad.players)
+          : squad.players || [];
+    } catch (parseError) {
+      console.error(`Error parsing players for squad ${tournamentId}:`, parseError);
+      squad.players = [];
+    }
+
+    const playerIds = squad.players.filter(
+      (playerId) => playerId && Number.isInteger(playerId)
+    );
+
+    if (playerIds.length === 0) {
+      console.warn(`No valid player IDs found for squad ${squadId}`);
+      return {
+        squadId: squad.squadId,
+        teamId: squad.teamId,
+        tournamentId: squad.tournamentId,
+        teamName: squad.teamName,
+        tournamentName: squad.tournamentName,
+        matchesWon: squad.matchesWon,
+        matchesLost: squad.matchesLost,
+        matchesDrawn: squad.matchesDrawn,
+        players: [],
+      };
+    }
+
+    const players = await new Promise((resolve, reject) => {
+      db.query(
+        `SELECT playerId AS id, CONCAT(firstName, ' ', secondName) AS name 
+          FROM Player 
+          WHERE playerId IN (?)`,
+        [playerIds],
+        (err, results) => (err ? reject(err) : resolve(results))
+      );
+    });
+
+    const playerMap = new Map(players.map((p) => [p.id, p]));
+
+    return {
+      squadId: squad.squadId,
+      teamId: squad.teamId,
+      tournamentId: squad.tournamentId,
+      teamName: squad.teamName,
+      tournamentName: squad.tournamentName,
+      matchesWon: squad.matchesWon,
+      matchesLost: squad.matchesLost,
+      matchesDrawn: squad.matchesDrawn,
+      players: squad.players
+        .map((playerId) => {
+          const player = playerMap.get(playerId);
+          return player
+            ? `${player.id}, ${player.name}`
+            : `${playerId} - Unknown Player`;
+        })
+        .filter(Boolean),
+    };
+  } catch (error) {
+    console.error(`Error in getSquadsByTournament for squad ${tournamentId}:`, error);
+    throw error;
+  }
 }
 
 const teamController = {
