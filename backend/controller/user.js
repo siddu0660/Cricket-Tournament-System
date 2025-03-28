@@ -474,7 +474,7 @@ async function getSquadsByTournament(tournamentId) {
           ? JSON.parse(squad.players)
           : squad.players || [];
     } catch (parseError) {
-      console.error(`Error parsing players for squad ${tournamentId}:`, parseError);
+      console.error(`Error parsing players for tournament ${tournamentId}:`, parseError);
       squad.players = [];
     }
 
@@ -483,7 +483,7 @@ async function getSquadsByTournament(tournamentId) {
     );
 
     if (playerIds.length === 0) {
-      console.warn(`No valid player IDs found for squad ${squadId}`);
+      console.warn(`No valid player IDs found for tournament ${tournamentId}`);
       return {
         squadId: squad.squadId,
         teamId: squad.teamId,
@@ -528,7 +528,7 @@ async function getSquadsByTournament(tournamentId) {
         .filter(Boolean),
     };
   } catch (error) {
-    console.error(`Error in getSquadsByTournament for squad ${tournamentId}:`, error);
+    console.error(`Error in getSquadsByTournament for tournament ${tournamentId}:`, error);
     throw error;
   }
 }
