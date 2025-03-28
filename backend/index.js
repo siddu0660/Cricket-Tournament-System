@@ -685,8 +685,8 @@ adminRouter.delete("/squads/:id", async (req, res) => {
 
 adminRouter.get("/squads/players", async (req, res) => {
     try {
-        const teamId = req.body.teamId;
-        const tournamentId = req.body.tournamentId;
+        const teamId = parseInt(req.query.teamId);
+        const tournamentId = parseInt(req.query.tournamentId);
         const players = await squadController.getPlayerBySquad(teamId, tournamentId);
         res.status(200).json(players);
     } catch (error) {
