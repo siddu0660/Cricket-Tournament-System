@@ -584,8 +584,10 @@ function handleAddMatchStatistics(matchId, teamId) {
 function handlePlayerMatchStatistics(matchStatisticsId, playerId) {
     return new Promise((resolve, reject) => {
         const checkSql = `
-            SELECT * FROM PlayerMatchStatistics
-            WHERE matchStatisticsId = ? AND playerId = ?
+            SELECT PMS.*, CONCAT(P.firstName, ' ', P.secondName) AS fullName 
+            FROM PlayerMatchStatistics AS PMS
+            INNER JOIN Player AS P ON PMS.playerId = P.playerId
+            WHERE PMS.matchStatisticsId = ? AND PMS.playerId = ?
         `; 
         
         const checkValues = [matchStatisticsId, playerId];
@@ -661,7 +663,8 @@ const matchStatisticsAdminController = {
 }
 
 const playerMatchStatisticsAdminController = {
-    handlePlayerMatchStatistics
+    handlePlayerMatchStatistics,
+    update
 }
 
 module.exports = {
