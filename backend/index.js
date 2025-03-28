@@ -560,6 +560,16 @@ adminRouter.delete("/players/:id", async (req, res) => {
     }
 });
 
+adminRouter.get("/matches", async (req, res) => {
+    try {
+        const matches = await matchController.getAllMatches();
+        res.status(200).json(matches);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
 adminRouter.get("/matches/:id", async (req, res) => {
     try {
         console.log(req.params.id);
