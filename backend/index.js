@@ -562,6 +562,7 @@ adminRouter.delete("/players/:id", async (req, res) => {
 
 adminRouter.get("/matches/:id", async (req, res) => {
     try {
+        console.log(req.params.id);
         const matchData = await matchController.getMatchById(req.params.id);
         console.log(matchData);
         res.status(200).json(matchData);
