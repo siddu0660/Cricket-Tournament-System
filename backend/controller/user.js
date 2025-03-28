@@ -176,7 +176,7 @@ function getAllMatches() {
   });
 }
 
-function getMatchById(tournamentId,matchId) {
+function getMatchById(matchId) {
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT 
@@ -192,9 +192,9 @@ function getMatchById(tournamentId,matchId) {
         INNER JOIN Venue V ON M.venueId = V.venueId
         INNER JOIN Tournament T ON T.tournamentId = M.tournamentId
         LEFT JOIN Player P ON M.manOfTheMatchId = P.playerId
-        WHERE M.tournamentId = ? AND M.matchId = ?
+        WHERE M.matchId = ?
     `;
-    db.query(sql, [tournamentId,matchId], (err, result) => {
+    db.query(sql, [matchId], (err, result) => {
       if (err) {
         reject(err);
       } else {
