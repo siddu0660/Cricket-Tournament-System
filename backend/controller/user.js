@@ -499,8 +499,8 @@ async function getSquadById(squadId) {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? `${player.id}, ${player.name}`
-            : `${playerId} - Unknown Player`;
+            ? { id: player.id, name: player.name }
+            : { id: playerId, name: "Unknown Player" };
         })
         .filter(Boolean),
     };
