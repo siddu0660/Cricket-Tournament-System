@@ -721,6 +721,21 @@ adminRouter.post("/playerMatchStatistics", async (req, res) => {
     }
 })
 
+adminRouter.get("/playerMatchStatistics/:matchStatisticsId/:playerId", async (req, res) => {
+    try {
+        const matchStatisticsId = req.params.matchStatisticsId;
+        const playerId = req.params.playerId;
+        const playerMatchStatistics = await playerMatchStatisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
+        if (!playerMatchStatistics) {
+            return res.status(404).json({ error: "Player match statistic not found" });
+        }
+        res.status(200).json(playerMatchStatistics);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
 adminRouter.put("/playerMatchStatistics/:playerMatchStatisticId", async (req, res) => {
     try {
         const playerMatchStatisticId = req.params.playerMatchStatisticId;
