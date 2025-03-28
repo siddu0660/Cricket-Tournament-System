@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require('../config/db'); // Assuming dbConfig contains your database configuration
 
 // Teams
 function addTeam(data) {
@@ -348,26 +348,34 @@ function deleteMatch(matchId) {
 function updateMatchResult(matchId, data) {
     return new Promise((resolve, reject) => {
         const sql = `
-        UPDATE Matches 
-        SET winnerId = ?, matchResult = ?, matchEndTime = ?, manOfTheMatchId = ? 
-        WHERE matchId = ?
+            UPDATE Matches 
+            SET winnerId = ?, matchResult = ?, manOfTheMatchId = ? 
+            WHERE matchId = ?
         `;
 
         const values = [
-        data.winnerId,
-        data.matchResult,
-        data.matchEndTime,
-        data.manOfTheMatchId,
-        matchId,
+            data.winnerId,
+            data.matchResult,
+            data.manOfTheMatchId,
+            matchId,
         ];
+
+        const procedureCall = `CALL UpdateMatchWinner(?, ?)`;
+
+        const callValues = [matchId, data.winnerId];
 
         db.query(sql, values, (err, result) => {
         if (err) {
             reject(err);
         } else {
-            updateTeamStatistics(data.winnerId, data.team1Id, data.team2Id)
-            .then(() => resolve(result))
-            .catch((err) => reject(err));
+            resolve(result)
+            db.query(procedureCall, callValues, (err, result2) => {
+                if (err) {
+                reject(err);
+                } else {
+                    resolve(result2);
+                }
+            })
         }
         });
     });
@@ -456,6 +464,77 @@ function deletePlayer(playerId) {
     });
 }
 
+// ------------------------------- //
+
+// Squads
+
+function addSquad(data) {
+    return new Promise((resolve, reject) => {
+        const sql = `
+            INSERT INTO Squad (teamId, tournamentId, players)
+            VALUES (?, ?, ?)
+        `;
+        
+        const playersArray = JSON.parse(data.players);
+
+        const values = [
+            data.teamId,
+            data.tournamentId,
+            JSON.stringify(playersArray),
+        ];
+
+        db.query(sql, values, (err, result) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(result);
+        }
+        });
+    });
+}
+
+function addPlayerToSquad(squadId, data) {
+    return new Promise((resolve, reject) => {
+        if(data.length == 1) {
+            const procedureCall = `CALL addPlayerToSquad(?, ?)`;
+            const callValues = [squadId , data.players];
+
+            db.query(procedureCall, callValues, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        } else {
+            const procedureCall = `CALL addPlayersToSquad(?, ?)`;
+            const playersArray = JSON.parse(data.players);
+            const callValues = [squadId, JSON.stringify(playersArray)];
+
+            db.query(procedureCall, callValues, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        }
+    })
+}
+
+function deleteSquad(squadId) {
+    return new Promise((resolve, reject) => {
+        const sql = "DELETE FROM Squad WHERE squadId = ?";
+        db.query(sql, [squadId], (err, result) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(result);
+        }
+        });
+    });
+}
+
 const teamAdminController = {
     addTeam,
     updateTeam,
@@ -488,10 +567,16 @@ const playerAdminController = {
     deletePlayer
 }
 
+const squadAdminController = {
+    addSquad,
+    deleteSquad
+}
+
 module.exports = {
     teamAdminController,
     venueAdminController,
     tournamentAdminController,
     matchAdminController,
-    playerAdminController
+    playerAdminController,
+    squadAdminController
 }

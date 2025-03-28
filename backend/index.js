@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController, matchController, playerController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
@@ -518,6 +518,26 @@ adminRouter.delete("/players/:id", async (req, res) => {
         console.log(error.message);
     }
 });
+
+adminRouter.post("/matchConclude/:id", async (req, res) => {
+    try {
+        const data = req.body;
+        const id = req.params.id;
+        await matchAdminController.updateMatchResult(data,id);
+        res.status(200).json({ message : "Match Concluded successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+matchController.getMatchById(61,10)
+    .then((result) => {
+        console.log(result);
+    })
+    .catch((error) => {
+        console.log(error);
+    })
 
 const port = 8000;
 
