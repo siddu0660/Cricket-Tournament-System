@@ -331,10 +331,7 @@ async function getPlayersBySquad(teamId, tournamentId) {
     }
 
     const squadDetails = await getSquadById(squadId);
-    return {
-      players: squadDetails.players,
-      squadId: squadId,
-    }
+    return squadDetails.players;
   } catch (error) {
     console.error("Error:", error);
     throw error;
@@ -417,8 +414,8 @@ async function getAllSquads() {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? `${player.id}, ${player.name}`
-            : `${playerId} - Unknown Player`;
+            ? { id: player.id, name: player.name, squadId: squad.squadId }
+            : { id: playerId, name: "Unknown Player", squadId: squad.squadId };
         })
         .filter(Boolean),
     }));
@@ -502,8 +499,8 @@ async function getSquadById(squadId) {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? { id: player.id, name: player.name }
-            : { id: playerId, name: "Unknown Player" };
+            ? { id: player.id, name: player.name, squadId: squad.squadId }
+            : { id: playerId, name: "Unknown Player", squadId: squad.squadId };
         })
         .filter(Boolean),
     };
