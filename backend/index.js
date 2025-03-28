@@ -525,21 +525,13 @@ adminRouter.post("/matchConclude/:id", async (req, res) => {
         const id = req.params.id;
         console.log("Data for Match Conclude : ", data);
         console.log("Id for Match Conclude", id);
-        await matchAdminController.updateMatchResult(data,id);
+        await matchAdminController.updateMatchResult(id,data);
         res.status(200).json({ message : "Match Concluded successfully"});
     } catch (error) {
         res.status(500).json({ error : error.message });
         console.log(error.message);
     }
 })
-
-matchController.getMatchById(61,10)
-    .then((result) => {
-        console.log(result);
-    })
-    .catch((error) => {
-        console.log(error);
-    })
 
 const port = 8000;
 
