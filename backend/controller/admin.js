@@ -619,6 +619,19 @@ function handlePlayerMatchStatistics(matchStatisticsId, playerId) {
     });
 }
 
+function updatePlayerMatchStatistics(playerMatchStatisticsId, data) {
+    return new Promise((resolve, reject) => {
+        const sql = `UPDATE PlayerMatchStatistics SET ? WHERE playerMatchStatisticsId = ?`;
+        db.query(sql, [data, playerMatchStatisticsId], (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
+
 const teamAdminController = {
     addTeam,
     updateTeam,
@@ -664,7 +677,7 @@ const matchStatisticsAdminController = {
 
 const playerMatchStatisticsAdminController = {
     handlePlayerMatchStatistics,
-    update
+    updatePlayerMatchStatistics
 }
 
 module.exports = {

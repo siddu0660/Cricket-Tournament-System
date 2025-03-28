@@ -721,6 +721,24 @@ adminRouter.post("/playerMatchStatistics", async (req, res) => {
     }
 })
 
+adminRouter.put("/playerMatchStatistics/:id", async (req, res) => {
+    try {
+        const playerMatchStatisticId = req.params.id;
+        const updateData = req.body;
+        console.log("Updating Player Match Statistics for ID:", playerMatchStatisticId);
+        console.log("Update data:", updateData);
+        const updatedPlayerMatchStatistic = await playerMatchStatisticsAdminController.updatePlayerMatchStatistics(playerMatchStatisticId, updateData);
+
+        if (!updatedPlayerMatchStatistic) {
+            return res.status(404).json({ error: "Player match statistic not found" });
+        }
+        res.status(200).json(updatedPlayerMatchStatistic);
+    } catch (error) {
+        console.error("Error updating player match statistics:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 const port = 8000;
 
 app.listen(port, () => {
