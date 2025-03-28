@@ -673,9 +673,9 @@ adminRouter.delete("/squads/:id", async (req, res) => {
 
 adminRouter.post("/matchStatistics", async (req, res) => {
     try {
-        const matchId = req.data.matchId;
-        const teamId = req.data.teamId;
-        console.log("Data for Match Statistics : ", data);
+        const matchId = req.body.matchId;
+        const teamId = req.body.teamId;
+        console.log("Data for Match Statistics : ", req.body);
         await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
         res.status(200).json({ message : "Match Statistics Added successfully"});
     } catch (error) {

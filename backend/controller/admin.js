@@ -548,7 +548,7 @@ function handleAddMatchStatistics(matchId, teamId) {
             }
 
             if (results.length > 0) {
-                resolve(results[0].id);
+                resolve(results[0].matchStatisticsId);
             } else {
                 const insertSql = `
                     INSERT INTO MatchStatistics (matchId, teamId)
