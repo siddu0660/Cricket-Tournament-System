@@ -414,8 +414,8 @@ async function getAllSquads() {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? { id: player.id, name: player.name, squadId: squad.squadId }
-            : { id: playerId, name: "Unknown Player", squadId: squad.squadId };
+            ? { id: player.id, name: player.name, teamId: squad.teamId }
+            : { id: playerId, name: "Unknown Player", teamId: squad.teamId };
         })
         .filter(Boolean),
     }));
@@ -499,8 +499,8 @@ async function getSquadById(squadId) {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? { id: player.id, name: player.name, squadId: squad.squadId }
-            : { id: playerId, name: "Unknown Player", squadId: squad.squadId };
+            ? { id: player.id, name: player.name, teamId: squad.teamId }
+            : { id: playerId, name: "Unknown Player", teamId: squad.teamId };
         })
         .filter(Boolean),
     };
