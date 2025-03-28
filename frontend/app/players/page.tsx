@@ -58,8 +58,13 @@ export default function PlayersPage() {
 
   const handleUpdatePlayer = async (playerId: string, playerData: Partial<Player>) => {
     try {
+      if (playerData.dateOfBirth) {
+        playerData.dateOfBirth = new Date(playerData.dateOfBirth).toISOString().split('T')[0];
+        console.log(playerData.dateOfBirth)
+      }
+      
       await updatePlayer(playerId, playerData);
-      await loadPlayers(); // Reload the players list
+      await loadPlayers(); 
     } catch (error) {
       setError('Failed to update player');
       console.error(error);

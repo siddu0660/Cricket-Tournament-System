@@ -9,7 +9,10 @@ import { CalendarDays, Clock, MapPin } from "lucide-react"
 import { Match } from '@/types/getMatch';
 import { getTournamentMatches } from '@/services/fetchTournamentMatchesService';
 import { format, isBefore, isToday, startOfDay } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { concludeMatch } from '@/services/matchConcludeService';
 
 interface TournamentMatchesProps {
   tournamentId: string;
@@ -23,6 +26,9 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<MatchStatus | 'all'>('all');
+  const [selectedWinner, setSelectedWinner] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Add this function to determine match status
   const getMatchStatus = (matchDate: string): MatchStatus => {
@@ -32,13 +38,10 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
     const todayStart = startOfDay(today);
 
     if (isToday(matchDateTime)) {
-      // If it's today's match, consider it ongoing
       return 'ongoing';
     } else if (isBefore(matchDay, todayStart)) {
-      // If match date is before today, it's completed
       return 'completed';
     } else {
-      // If match date is after today, it's upcoming
       return 'upcoming';
     }
   };
@@ -46,7 +49,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   // Filter matches based on selected status
   const filteredMatches = matches.filter(match => {
     if (selectedStatus === 'all') return true;
-    return getMatchStatus(match.matchDate) === selectedStatus;
+    return getMatchStatus(new Date(match.matchDate).toISOString()) === selectedStatus;
   });
 
   useEffect(() => {
@@ -114,6 +117,32 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
     }
   };
 
+  const handleConcludeMatch = async (matchId: string) => {
+    try {
+      const conclusionData = {
+        winnerId: parseInt(selectedWinner),
+        matchResult: description,
+        manOfTheMatchId: 1,
+      };
+      
+      await concludeMatch(matchId, conclusionData);
+      console.log("Match concluded successfully");
+      
+      // Reset form
+      setSelectedWinner("");
+      setDescription("");
+      
+      // Close dialog
+      setIsDialogOpen(false);
+      
+      // Refresh matches list
+      const data = await getTournamentMatches(tournamentId);
+      setMatches(data);
+    } catch (error) {
+      console.error("Error concluding match:", error);
+    }
+  };
+
   if (loading) {
     return <div>Loading matches...</div>;
   }
@@ -146,7 +175,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
 
       <div className="space-y-4">
         {filteredMatches.map((match) => (
-          <Card key={match.id} className="border-olive/20 hover:shadow-md transition-shadow">
+          <Card key={match.matchId} className="border-olive/20 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 {/* Left side - Match info */}
@@ -209,8 +238,8 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
 
                 {/* Right side - Status and Buttons */}
                 <div className="flex flex-col gap-3 min-w-[140px] items-center">
-                  <div className={getStatusStyles(getMatchStatus(match.matchDate))}>
-                    {getMatchStatus(match.matchDate).toUpperCase()}
+                  <div className={getStatusStyles(getMatchStatus(new Date(match.matchDate).toISOString()))}>
+                    {getMatchStatus(new Date(match.matchDate).toISOString()).toUpperCase()}
                   </div>
                   
                   <Button 
@@ -219,8 +248,8 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                     className="w-full text-center justify-center font-medium" 
                     asChild
                   >
-                    <Link href={`/matches/${match.id}`}>
-                      {getMatchStatus(match.matchDate) === 'upcoming' ? (
+                    <Link href={`/matches/${match.matchId}`}>
+                      {getMatchStatus(new Date(match.matchDate).toISOString()) === 'upcoming' ? (
                         <span className="flex items-center gap-2">
                           Match Details
                         </span>
@@ -232,16 +261,59 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                     </Link>
                   </Button>
                   
-                  {getMatchStatus(match.matchDate) === 'upcoming' && (
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-light-teal hover:bg-teal text-dark-olive font-medium"
-                      asChild
-                    >
-                      <Link href={`/matches/${match.id}/edit`}>
-                        Edit Match
-                      </Link>
-                    </Button>
+                  {getMatchStatus(new Date(match.matchDate).toISOString()) === 'upcoming' && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-light-teal hover:bg-teal text-dark-olive font-medium"
+                        >
+                          Conclude Match
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Conclude Match</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="winner">Select Winner</Label>
+                            <Select
+                              value={selectedWinner}
+                              onValueChange={setSelectedWinner}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select winning team" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={match.team1Id.toString()}>
+                                  {match.team1Name}
+                                </SelectItem>
+                                <SelectItem value={match.team2Id.toString()}>
+                                  {match.team2Name}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="description">Match Description</Label>
+                            <Textarea
+                              id="description"
+                              value={description}
+                              onChange={(e) => setDescription(e.target.value)}
+                              placeholder="Enter match summary..."
+                              className="h-32"
+                            />
+                          </div>
+                          <Button
+                            onClick={() => handleConcludeMatch(match.matchId.toString())}
+                            className="bg-light-teal hover:bg-teal text-dark-olive font-medium"
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   )}
                 </div>
               </div>

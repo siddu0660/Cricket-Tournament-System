@@ -1,83 +1,41 @@
+'use client';
+
+import { useEffect, useState, use } from 'react';
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Trophy, Clock, Award, User, ArrowLeft } from "lucide-react"
+import { getMatchDetails } from '@/services/matchService';
+import { Match } from '@/types/matchDetails';
 
-export default function MatchDetailsPage({ params }: { params: { id: string } }) {
-  // This would be fetched from an API in a real application
-  const match = {
-    id: Number.parseInt(params.id),
-    tournament: {
-      id: 1,
-      name: "Premier Cricket League 2025",
-    },
-    team1: {
-      id: 1,
-      name: "Mumbai Mavericks",
-      score: "189/6",
-      overs: "20.0",
-    },
-    team2: {
-      id: 5,
-      name: "Kolkata Kings",
-      score: "164/8",
-      overs: "20.0",
-    },
-    date: "2025-03-22",
-    time: "19:00",
-    venue: "Wankhede Stadium",
-    location: "Mumbai, India",
-    status: "completed",
-    result: "Mumbai Mavericks won by 25 runs",
-    toss: {
-      winner: "Mumbai Mavericks",
-      decision: "Bat",
-    },
-    umpires: ["Kumar Dharmasena", "Richard Illingworth"],
-    manOfTheMatch: {
-      id: 1,
-      name: "Rohit Sharma",
-      team: "Mumbai Mavericks",
-      performance: "78 runs off 46 balls",
-    },
-    battingStats: {
-      team1: [
-        { player: "Rohit Sharma", runs: 78, balls: 46, fours: 6, sixes: 4, strikeRate: 169.57 },
-        { player: "Quinton de Kock", runs: 45, balls: 32, fours: 4, sixes: 2, strikeRate: 140.63 },
-        { player: "Suryakumar Yadav", runs: 32, balls: 20, fours: 3, sixes: 1, strikeRate: 160.0 },
-        { player: "Kieron Pollard", runs: 22, balls: 12, fours: 1, sixes: 2, strikeRate: 183.33 },
-        { player: "Hardik Pandya", runs: 8, balls: 6, fours: 1, sixes: 0, strikeRate: 133.33 },
-        { player: "Krunal Pandya", runs: 2, balls: 3, fours: 0, sixes: 0, strikeRate: 66.67 },
-        { player: "Rahul Chahar", runs: 0, balls: 1, fours: 0, sixes: 0, strikeRate: 0.0 },
-      ],
-      team2: [
-        { player: "Shubman Gill", runs: 43, balls: 36, fours: 5, sixes: 1, strikeRate: 119.44 },
-        { player: "Nitish Rana", runs: 37, balls: 28, fours: 3, sixes: 2, strikeRate: 132.14 },
-        { player: "Eoin Morgan", runs: 29, balls: 20, fours: 2, sixes: 1, strikeRate: 145.0 },
-        { player: "Dinesh Karthik", runs: 22, balls: 15, fours: 2, sixes: 1, strikeRate: 146.67 },
-        { player: "Andre Russell", runs: 18, balls: 10, fours: 1, sixes: 1, strikeRate: 180.0 },
-        { player: "Shakib Al Hasan", runs: 8, balls: 6, fours: 1, sixes: 0, strikeRate: 133.33 },
-        { player: "Pat Cummins", runs: 5, balls: 4, fours: 0, sixes: 0, strikeRate: 125.0 },
-        { player: "Lockie Ferguson", runs: 0, balls: 1, fours: 0, sixes: 0, strikeRate: 0.0 },
-      ],
-    },
-    bowlingStats: {
-      team1: [
-        { player: "Jasprit Bumrah", overs: "4.0", maidens: 0, runs: 27, wickets: 3, economy: 6.75 },
-        { player: "Trent Boult", overs: "4.0", maidens: 0, runs: 32, wickets: 2, economy: 8.0 },
-        { player: "Rahul Chahar", overs: "4.0", maidens: 0, runs: 35, wickets: 2, economy: 8.75 },
-        { player: "Krunal Pandya", overs: "4.0", maidens: 0, runs: 29, wickets: 1, economy: 7.25 },
-        { player: "Hardik Pandya", overs: "4.0", maidens: 0, runs: 38, wickets: 0, economy: 9.5 },
-      ],
-      team2: [
-        { player: "Pat Cummins", overs: "4.0", maidens: 0, runs: 35, wickets: 2, economy: 8.75 },
-        { player: "Lockie Ferguson", overs: "4.0", maidens: 0, runs: 42, wickets: 1, economy: 10.5 },
-        { player: "Shakib Al Hasan", overs: "4.0", maidens: 0, runs: 33, wickets: 1, economy: 8.25 },
-        { player: "Varun Chakravarthy", overs: "4.0", maidens: 0, runs: 30, wickets: 1, economy: 7.5 },
-        { player: "Andre Russell", overs: "4.0", maidens: 0, runs: 45, wickets: 1, economy: 11.25 },
-      ],
-    },
+export default function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const [match, setMatch] = useState<Match | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMatchDetails = async () => {
+      try {
+        const data = await getMatchDetails(Number(resolvedParams.id));
+        setMatch(data);
+      } catch (err) {
+        setError('Failed to load match details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatchDetails();
+  }, [resolvedParams.id]);
+
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  }
+
+  if (error || !match) {
+    return <div className="flex min-h-screen items-center justify-center">{error}</div>;
   }
 
   return (
