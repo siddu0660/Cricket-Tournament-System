@@ -493,32 +493,33 @@ function addSquad(data) {
     });
 }
 
-function addPlayerToSquad(squadId, data) {
+function addPlayerToSquad(squadId, playerId) {
     return new Promise((resolve, reject) => {
-        if(data.length == 1) {
-            const procedureCall = `CALL addPlayerToSquad(?, ?)`;
-            const callValues = [squadId , data.players];
+        const procedureCall = `CALL addPlayerToSquad(?, ?)`;
+        const callValues = [squadId , playerId];
 
-            db.query(procedureCall, callValues, (err, result) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(result);
-                }
-            });
-        } else {
-            const procedureCall = `CALL addPlayersToSquad(?, ?)`;
-            const playersArray = JSON.parse(data.players);
-            const callValues = [squadId, JSON.stringify(playersArray)];
+        db.query(procedureCall, callValues, (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    })
+}
 
-            db.query(procedureCall, callValues, (err, result) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(result);
-                }
-            });
-        }
+function deletePlayerFromSquad(squadId, playerId) {
+    return new Promise((resolve, reject) => {
+        const procedureCall = `CALL removePlayerFromSquad(?, ?)`;
+        const callValues = [squadId , playerId];
+
+        db.query(procedureCall, callValues, (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
     })
 }
 
@@ -569,6 +570,8 @@ const playerAdminController = {
 
 const squadAdminController = {
     addSquad,
+    addPlayerToSquad,
+    deletePlayerFromSquad,
     deleteSquad
 }
 

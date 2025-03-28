@@ -3,7 +3,7 @@ const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const { teamController, venueController, tournamentController, matchController, playerController } = require("./controller/user");
+const { teamController, venueController, tournamentController, matchController, playerController, squadController } = require("./controller/user");
 const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController } = require("./controller/admin");
 
 require("dotenv").config();
@@ -224,6 +224,36 @@ userRouter.get("/matches/:id", async (req, res) => {
         console.log(error.message);
     }
 })
+
+userRouter.get("/squads", async (req, res) => {
+    try {
+        const squads = await squadController.getAllSquads();
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
+userRouter.get("/squads/:id", async (req, res) => {
+    try {
+        const squads = await squadController.getSquadById(req.params.id);
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
+userRouter.get("/squads/tournament/:id", async (req, res) => {
+    try {
+        const squads = await squadController.getSquadsByTournament(req.params.id);
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
 
 // Admin Routes
 
@@ -549,6 +579,81 @@ adminRouter.post("/matchConclude/:id", async (req, res) => {
         console.log("Id for Match Conclude", id);
         await matchAdminController.updateMatchResult(id,data);
         res.status(200).json({ message : "Match Concluded successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.get("/squads", async (req, res) => {
+    try {
+        const squads = await squadController.getAllSquads();
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.get("/squads/:id", async (req, res) => {
+    try {
+        const squads = await squadController.getSquadById(req.params.id);
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.get("/squads/tournament/:id", async (req, res) => {
+    try {
+        const squads = await squadController.getSquadsByTournament(req.params.id);
+        res.status(200).json(squads);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
+
+adminRouter.post("/squads", async (req, res) => {
+    try {
+        const data = req.body;
+        console.log("Data for Squad: ", data);
+        await squadAdminController.addSquad(data);
+        res.status(200).json({ message : "Squad Added successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.post("/squads/:squadId/player/:id", async (req, res) => {
+    try {
+        console.log("Data for Squad Player Add: ", req.params.squadId, req.params.id);
+        await squadAdminController.addPlayerToSquad(req.params.squadId, req.params.id);
+        res.status(200).json({ message : "Player Added to Squad successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.delete("/squads/:squadId/player/:id", async (req, res) => {
+    try {
+        console.log("Data for Squad Player Delete: ", req.params.squadId, req.params.id);
+        await squadAdminController.deletePlayerFromSquad(req.params.squadId, req.params.id);
+        res.status(200).json({ message : "Player Deleted from Squad successfully"});
+    } catch (error) {
+        res.status(500).json({ error : error.message });
+        console.log(error.message);
+    }
+})
+
+adminRouter.delete("/squads/:id", async (req, res) => {
+    try {
+        console.log("Squad Id for delete: ", req.params.id);
+        await squadAdminController.deleteSquad(req.params.id);
+        res.status(200).json({ message : "Squad Added successfully"});
     } catch (error) {
         res.status(500).json({ error : error.message });
         console.log(error.message);
