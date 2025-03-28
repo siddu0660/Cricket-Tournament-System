@@ -234,7 +234,22 @@ function getMatchesByTeam(teamId, tournamentId) {
 
 function getMatchStatsId(matchId, teamId) {
   return new Promise((resolve, reject) => {
-    const sql = "SELECT * FROM MatchStatistics WHERE matchId = ? AND teamId = ?";
+    const sql = `
+      SELECT 
+          ms.*,
+          t1.TeamName AS Team1Name,
+          t2.TeamName AS Team2Name
+      FROM 
+          MatchStatistics ms
+      INNER JOIN 
+          Matches m ON m.matchId = ms.matchId
+      INNER JOIN 
+          Team t1 ON m.team1Id = t1.TeamID
+      INNER JOIN 
+          Team t2 ON m.team2Id = t2.TeamID
+      WHERE 
+          ms.matchId = ? AND ms.teamId = ?
+    `;
     db.query(sql, [matchId, teamId], (err, result) => {
       if (err) {
         reject(err);
