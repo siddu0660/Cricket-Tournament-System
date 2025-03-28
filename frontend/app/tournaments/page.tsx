@@ -16,6 +16,8 @@ import { fetchVenues } from '@/services/fetchVenueService'
 import { Team } from '@/types/tour'
 import { fetchTournamentTeams, generateGroupFixtures } from '@/services/teamService'
 import { Fixture } from '@/types/tour'
+import { addMatches } from '@/services/creatematchService'
+import { MatchData } from '@/types/match'
 
 export default function TournamentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -30,6 +32,7 @@ export default function TournamentsPage() {
   const [selectedVenue, setSelectedVenue] = useState<string>('')
   const [isLoadingTeams, setIsLoadingTeams] = useState(false)
   const [isFixturesGenerated, setIsFixturesGenerated] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     const loadTournaments = async () => {
@@ -92,6 +95,53 @@ export default function TournamentsPage() {
     const matchesFormat = formatFilter === "all" || tournament.tourFormat.toLowerCase() === formatFilter.toLowerCase()
     return matchesSearch && matchesFormat
   })
+
+  const handleSaveMatches = async (tournamentId: number) => {
+    if (!tournamentId) {
+      setError('Invalid tournament ID');
+      return;
+    }
+
+    try {
+      setIsSaving(true)
+      setError(null)
+      
+      // Validate that all required fields are present
+      const hasInvalidFixtures = generatedFixtures.some(
+        fixture => !fixture.matchDate || !fixture.venueId
+      );
+
+      if (hasInvalidFixtures) {
+        throw new Error('Please set both venue and match date for all fixtures');
+      }
+      
+      const matchesToSave: MatchData[] = generatedFixtures.map(fixture => {
+        // Convert to MySQL date format (YYYY-MM-DD)
+        const date = new Date(fixture.matchDate);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const matchDate = `${year}-${month}-${day}`;
+        
+        return {
+          tournamentId,
+          team1Id: fixture.team1.teamId,
+          team2Id: fixture.team2.teamId,
+          venueId: Number(fixture.venueId) || 0,
+          matchDate: matchDate
+        };
+      });
+
+      console.log('Matches to save:', matchesToSave);
+      await addMatches(tournamentId, matchesToSave)
+      setIsFixturesGenerated(false)
+      setGeneratedFixtures([])
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to save matches')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const renderTournamentCard = (tournament: Tournament) => (
     <Card key={tournament.tournamentId} className="border-olive/20 hover:shadow-md transition-shadow">
@@ -273,12 +323,13 @@ export default function TournamentsPage() {
                                   <Input 
                                     type="datetime-local"
                                     className="w-[200px]"
-                                    value={fixture.matchDate}
+                                    value={fixture.matchDate || ''}
+                                    required
                                     onChange={(e) => {
                                       const updatedFixtures = [...generatedFixtures];
                                       updatedFixtures[index] = {
                                         ...updatedFixtures[index],
-                                        matchDate: e.target.value
+                                        matchDate: e.target.value // This will be in ISO format
                                       };
                                       setGeneratedFixtures(updatedFixtures);
                                     }}
@@ -288,6 +339,15 @@ export default function TournamentsPage() {
                             </CardContent>
                           </Card>
                         ))}
+                        <div className="flex justify-end mt-4">
+                          <Button 
+                            className="bg-light-teal hover:bg-teal text-dark-olive"
+                            onClick={() => tournament.tournamentId && handleSaveMatches(tournament.tournamentId)}
+                            disabled={isSaving || !tournament.tournamentId}
+                          >
+                            {isSaving ? 'Saving...' : 'Save Matches'}
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   )}

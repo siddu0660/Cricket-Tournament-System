@@ -12,10 +12,10 @@ export const fetchTournamentTeams = async (tournamentName: string): Promise<Tour
     
     console.log('API Response:', response.data);
     
-    // If response.data is an array, wrap it in the expected structure
-    if (Array.isArray(response.data)) {
-      return { tournamentName, teams: response.data };
-    }
+      // If response.data is an array, wrap it in the expected structure
+      if (Array.isArray(response.data)) {
+        return { tournamentName, teams: response.data };
+      }
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

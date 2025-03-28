@@ -1,122 +1,70 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Flag, Calendar, Award, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, Trash2 } from "lucide-react"
+import { fetchPlayers } from '@/services/fetchPlayerService'
+import { useState, useEffect } from "react"
+import { Player } from "@/types/player"
+import { deletePlayer } from '@/services/deletePlayerService'
+import { updatePlayer } from '@/services/updatePlayerService'
+import { UpdatePlayerForm } from '@/components/UpdatePlayerForm'
 
 export default function PlayersPage() {
-  // This would be fetched from an API in a real application
-  const players = [
-    {
-      id: 1,
-      firstName: "Rohit",
-      lastName: "Sharma",
-      dateOfBirth: "1987-04-30",
-      jerseyNumber: 45,
-      role: "Batsman",
-      battingStyle: "Right-handed",
-      nationality: "India",
-      team: "Mumbai Mavericks",
-      stats: {
-        matches: 213,
-        runs: 5879,
-        wickets: 15,
-        highestScore: 118,
-        bestBowling: "2/9",
-      },
-    },
-    {
-      id: 2,
-      firstName: "Virat",
-      lastName: "Kohli",
-      dateOfBirth: "1988-11-05",
-      jerseyNumber: 18,
-      role: "Batsman",
-      battingStyle: "Right-handed",
-      nationality: "India",
-      team: "Bangalore Bulls",
-      stats: {
-        matches: 223,
-        runs: 6624,
-        wickets: 4,
-        highestScore: 113,
-        bestBowling: "1/15",
-      },
-    },
-    {
-      id: 3,
-      firstName: "MS",
-      lastName: "Dhoni",
-      dateOfBirth: "1981-07-07",
-      jerseyNumber: 7,
-      role: "Wicket-keeper Batsman",
-      battingStyle: "Right-handed",
-      nationality: "India",
-      team: "Chennai Challengers",
-      stats: {
-        matches: 204,
-        runs: 4876,
-        wickets: 0,
-        highestScore: 84,
-        bestBowling: "-",
-      },
-    },
-    {
-      id: 4,
-      firstName: "Jasprit",
-      lastName: "Bumrah",
-      dateOfBirth: "1993-12-06",
-      jerseyNumber: 93,
-      role: "Bowler",
-      battingStyle: "Right-handed",
-      nationality: "India",
-      team: "Mumbai Mavericks",
-      stats: {
-        matches: 106,
-        runs: 56,
-        wickets: 130,
-        highestScore: 10,
-        bestBowling: "5/10",
-      },
-    },
-    {
-      id: 5,
-      firstName: "Ravindra",
-      lastName: "Jadeja",
-      dateOfBirth: "1988-12-06",
-      jerseyNumber: 8,
-      role: "All-rounder",
-      battingStyle: "Left-handed",
-      nationality: "India",
-      team: "Chennai Challengers",
-      stats: {
-        matches: 200,
-        runs: 2386,
-        wickets: 127,
-        highestScore: 62,
-        bestBowling: "5/16",
-      },
-    },
-    {
-      id: 6,
-      firstName: "KL",
-      lastName: "Rahul",
-      dateOfBirth: "1992-04-18",
-      jerseyNumber: 1,
-      role: "Batsman",
-      battingStyle: "Right-handed",
-      nationality: "India",
-      team: "Punjab Panthers",
-      stats: {
-        matches: 109,
-        runs: 3889,
-        wickets: 0,
-        highestScore: 132,
-        bestBowling: "-",
-      },
-    },
-  ]
+  const [players, setPlayers] = useState<Player[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadPlayers()
+  }, [])
+
+  const loadPlayers = async () => {
+    try {
+      const fetchedPlayers = await fetchPlayers()
+      const playersWithStats = fetchedPlayers.map(player => ({
+        ...player,
+        stats: {
+          matches: null,
+          runs: null,
+          wickets: null,
+          highestScore: null,
+          bestBowling: null
+        }
+      }))
+      setPlayers(playersWithStats)
+    } catch (error) {
+      setError('Failed to load players')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeletePlayer = async (playerId: string) => {
+    if (window.confirm('Are you sure you want to delete this player?')) {
+      try {
+        await deletePlayer(playerId);
+        loadPlayers();
+      } catch (error) {
+        setError('Failed to delete player');
+        console.error(error);
+      }
+    }
+  };
+
+  const handleUpdatePlayer = async (playerId: string, playerData: Partial<Player>) => {
+    try {
+      await updatePlayer(playerId, playerData);
+      await loadPlayers(); // Reload the players list
+    } catch (error) {
+      setError('Failed to update player');
+      console.error(error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -143,16 +91,15 @@ export default function PlayersPage() {
               </Button>
             </div>
           </div>
-          
         </div>
       </header>
       <main className="flex-1 container py-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {players.map((player) => (
-            <Card key={player.id} className="overflow-hidden">
+            <Card key={player.playerId} className="overflow-hidden">
               <CardHeader className="bg-cricket-sage text-cricket-darkOlive pb-2">
                 <CardTitle className="text-xl">
-                  {player.firstName} {player.lastName}
+                  {player.firstName} {player.secondName}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
@@ -160,7 +107,7 @@ export default function PlayersPage() {
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-cricket-brown" />
                     <span className="text-sm">
-                      {player.role} | #{player.jerseyNumber}
+                      {player.playerRole} | #{player.jerseyNumber}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -171,25 +118,43 @@ export default function PlayersPage() {
                     <Calendar className="h-4 w-4 text-cricket-brown" />
                     <span className="text-sm">Born: {new Date(player.dateOfBirth).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-cricket-brown" />
-                    <span className="text-sm">Team: {player.team}</span>
+                    <span className="text-sm">Teams: {player.teamsPlayed.join(', ')}</span>
+                  </div> */}
+                  <div className="mt-2 pt-2 border-t">
+                    <div className="text-sm font-medium mb-1">Player Details:</div>
+                    <div className="flex flex-col gap-1 text-sm">
+                      <div>Batting Style: {player.battingStyle}</div>
+                      <div>Bowling Style: {player.bowlingStyle}</div>
+                      <div>Gender: {player.gender ? 'Male' : 'Female'}</div>
+                    </div>
                   </div>
                   <div className="mt-2 pt-2 border-t">
                     <div className="text-sm font-medium mb-1">Career Statistics:</div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                      <div>Matches: {player.stats.matches}</div>
-                      <div>Runs: {player.stats.runs}</div>
-                      <div>Wickets: {player.stats.wickets}</div>
-                      <div>Highest: {player.stats.highestScore}</div>
+                      <div>Matches: {player.stats?.matches ?? 'N/A'}</div>
+                      <div>Runs: {player.stats?.runs ?? 'N/A'}</div>
+                      <div>Wickets: {player.stats?.wickets ?? 'N/A'}</div>
+                      <div>Highest: {player.stats?.highestScore ?? 'N/A'}</div>
                     </div>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-3">
                 <Button asChild variant="default" size="sm">
-                  <Link href={`/players/${player.id}`}>View Profile</Link>
+                  <Link href={`/players/${player.playerId}`}>View Profile</Link>
                 </Button>
+                <div className="flex gap-2">
+                  <UpdatePlayerForm player={player} onUpdate={handleUpdatePlayer} />
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => player.playerId && handleDeletePlayer(player.playerId.toString())}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           ))}

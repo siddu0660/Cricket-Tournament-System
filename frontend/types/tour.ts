@@ -6,6 +6,7 @@ export interface Team {
   
   export interface TournamentTeam {
     tournamentId: number;
+    tournamentName: string;
     teams: Team[];
   }
   

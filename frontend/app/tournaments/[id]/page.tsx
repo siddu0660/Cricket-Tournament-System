@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -6,20 +8,39 @@ import { CalendarDays, ChevronLeft, MapPin, Trophy, Users, Clock, Award } from "
 import TournamentMatches from "@/components/tournament-matches"
 import TournamentStandings from "@/components/tournament-standings"
 import TournamentStats from "@/components/tournament-stats"
+import { getTournamentById } from "@/services/fetchTournamentIdService"
+import { Tournament } from "@/types/tournament"
+import { useEffect, useState, use } from "react"
+import { format } from 'date-fns'
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
-  // Mock tournament data
-  const tournament = {
-    id: params.id,
-    name: "IPL 2023",
-    startDate: "Apr 1, 2023",
-    endDate: "May 30, 2023",
-    location: "Multiple venues, India",
-    teams: 10,
-    format: "T20",
-    status: "active",
-    description:
-      "The Indian Premier League (IPL) is a professional Twenty20 cricket league in India contested during April and May of every year by franchise teams representing Indian cities.",
+export default function TournamentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTournament = async () => {
+      try {
+        const data = await getTournamentById(id);
+        setTournament(data);
+      } catch (err) {
+        setError('Failed to fetch tournament details');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTournament();
+  }, [id]);
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
+
+  if (error || !tournament) {
+    return <div className="container mx-auto px-4 py-8">Error: {error}</div>;
   }
 
   return (
@@ -35,18 +56,18 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-3xl font-bold text-dark-olive">{tournament.name}</h1>
+              <h1 className="text-3xl font-bold text-dark-olive">{tournament.tournamentName}</h1>
               <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</div>
             </div>
-            <p className="text-olive">{tournament.description}</p>
+            <p className="text-olive">The Indian Premier League (IPL) is a professional Twenty20 cricket league in India contested during April and May of every year by franchise teams representing Indian cities</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="border-dark-olive text-dark-olive" asChild>
-              <Link href={`/tournaments/${params.id}/edit`}>Edit</Link>
+            {/* <Button variant="outline" className="border-dark-olive text-dark-olive" asChild>
+              <Link href={`/tournaments/${id}/edit`}>Edit</Link>
             </Button>
             <Button className="bg-light-teal hover:bg-teal text-dark-olive" asChild>
-              <Link href={`/tournaments/${params.id}/matches/create`}>Add Match</Link>
-            </Button>
+              <Link href={`/tournaments/${id}/matches/create`}>Add Match</Link>
+            </Button> */}
           </div>
         </div>
       </div>
@@ -59,7 +80,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
               <div>
                 <div className="text-sm text-olive">Tournament Dates</div>
                 <div className="font-medium text-dark-olive">
-                  {tournament.startDate} - {tournament.endDate}
+                  {format(new Date(tournament.startDate), 'MMM d, yyyy')} - {format(new Date(tournament.endDate), 'MMM d, yyyy')}
                 </div>
               </div>
             </div>
@@ -71,7 +92,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
               <MapPin className="h-5 w-5 text-teal" />
               <div>
                 <div className="text-sm text-olive">Location</div>
-                <div className="font-medium text-dark-olive">{tournament.location}</div>
+                <div className="font-medium text-dark-olive">{tournament.tourLocation}</div>
               </div>
             </div>
           </CardContent>
@@ -82,7 +103,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
               <Award className="h-5 w-5 text-teal" />
               <div>
                 <div className="text-sm text-olive">Format</div>
-                <div className="font-medium text-dark-olive">{tournament.format}</div>
+                <div className="font-medium text-dark-olive">{tournament.tourFormat}</div>
               </div>
             </div>
           </CardContent>
@@ -97,13 +118,13 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
           <TabsTrigger value="teams">Teams</TabsTrigger>
         </TabsList>
         <TabsContent value="matches" className="mt-0">
-          <TournamentMatches tournamentId={params.id} />
+          <TournamentMatches tournamentId={id} />
         </TabsContent>
         <TabsContent value="standings" className="mt-0">
-          <TournamentStandings tournamentId={params.id} />
+          <TournamentStandings tournamentId={id} />
         </TabsContent>
         <TabsContent value="stats" className="mt-0">
-          <TournamentStats tournamentId={params.id} />
+          <TournamentStats tournamentId={id} />
         </TabsContent>
         <TabsContent value="teams" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

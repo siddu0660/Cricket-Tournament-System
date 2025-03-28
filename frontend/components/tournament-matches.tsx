@@ -1,137 +1,246 @@
 "use client"
 
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { CalendarDays, Clock, MapPin } from "lucide-react"
+import { Match } from '@/types/getMatch';
+import { getTournamentMatches } from '@/services/fetchTournamentMatchesService';
+import { format, isBefore, isToday, startOfDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
-export default function TournamentMatches({ tournamentId }: { tournamentId: string }) {
-  // Mock matches data
-  const matches = [
-    {
-      id: 1,
-      team1: "Chennai Super Kings",
-      team1Short: "CSK",
-      team2: "Mumbai Indians",
-      team2Short: "MI",
-      date: "Apr 15, 2023",
-      time: "7:30 PM IST",
-      venue: "Wankhede Stadium, Mumbai",
-      result: "CSK won by 5 wickets",
-      status: "completed",
-    },
-    {
-      id: 2,
-      team1: "Royal Challengers Bangalore",
-      team1Short: "RCB",
-      team2: "Kolkata Knight Riders",
-      team2Short: "KKR",
-      date: "Apr 18, 2023",
-      time: "7:30 PM IST",
-      venue: "M. Chinnaswamy Stadium, Bangalore",
-      result: "KKR won by 21 runs",
-      status: "completed",
-    },
-    {
-      id: 3,
-      team1: "Delhi Capitals",
-      team1Short: "DC",
-      team2: "Rajasthan Royals",
-      team2Short: "RR",
-      date: "Apr 20, 2023",
-      time: "3:30 PM IST",
-      venue: "Arun Jaitley Stadium, Delhi",
-      result: "",
-      status: "upcoming",
-    },
-    {
-      id: 4,
-      team1: "Punjab Kings",
-      team1Short: "PBKS",
-      team2: "Sunrisers Hyderabad",
-      team2Short: "SRH",
-      date: "Apr 22, 2023",
-      time: "7:30 PM IST",
-      venue: "Punjab Cricket Association Stadium, Mohali",
-      result: "",
-      status: "upcoming",
-    },
-  ]
+interface TournamentMatchesProps {
+  tournamentId: string;
+}
+
+// Add this type for match status
+type MatchStatus = 'upcoming' | 'ongoing' | 'completed';
+
+export default function TournamentMatches({ tournamentId }: TournamentMatchesProps) {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<MatchStatus | 'all'>('all');
+
+  // Add this function to determine match status
+  const getMatchStatus = (matchDate: string): MatchStatus => {
+    const matchDateTime = new Date(matchDate);
+    const today = new Date();
+    const matchDay = startOfDay(matchDateTime);
+    const todayStart = startOfDay(today);
+
+    if (isToday(matchDateTime)) {
+      // If it's today's match, consider it ongoing
+      return 'ongoing';
+    } else if (isBefore(matchDay, todayStart)) {
+      // If match date is before today, it's completed
+      return 'completed';
+    } else {
+      // If match date is after today, it's upcoming
+      return 'upcoming';
+    }
+  };
+
+  // Filter matches based on selected status
+  const filteredMatches = matches.filter(match => {
+    if (selectedStatus === 'all') return true;
+    return getMatchStatus(match.matchDate) === selectedStatus;
+  });
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const data = await getTournamentMatches(tournamentId);
+        setMatches(data);
+        console.log(data);
+      } catch (err) {
+        setError('Failed to fetch matches');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatches();
+  }, [tournamentId]);
+
+  const getTeamInitials = (teamName: string) => {
+    if (teamName === "Mumbai Indians") return "MI";
+    if (teamName === "Kolkata Knight Riders") return "KKR";
+    if (teamName === "Chennai Super Kings") return "CSK";
+    if (teamName === "Royal Challengers Bangalore") return "RCB";
+    if (teamName === "Delhi Capitals") return "DC";
+    if (teamName === "Sunrisers Hyderabad") return "SRH";
+    if (teamName === "Rajasthan Royals") return "RR";
+    if (teamName === "Kings XI Punjab") return "KXIP";
+    if (teamName === "Gujarat Titans") return "GT";
+    if (teamName === "Lucknow Super Giants") return "LSG";
+    if (teamName === "Punjab Kings") return "PBKS";
+    if (teamName === "Rajasthan Royals") return "RR";
+    if (teamName === "Sunrisers Hyderabad") return "SRH";
+    if( teamName === "India") return "IND";
+    if( teamName === "Australia") return "AUS";
+    if( teamName === "England") return "ENG";
+    if( teamName === "South Africa") return "SA";
+    if( teamName === "New Zealand") return "NZ";
+    if( teamName === "West Indies") return "WI";
+    if( teamName === "Sri Lanka") return "SL";
+    if( teamName === "Bangladesh") return "BAN";
+    if( teamName === "Afghanistan") return "AFG";
+    if( teamName === "Zimbabwe") return "ZIM";
+    if( teamName === "Netherlands") return "NED";
+    if( teamName === "Ireland") return "IRE";
+    if( teamName === "Scotland") return "SCO";
+    if( teamName === "Hong Kong") return "HK";
+    if( teamName === "Nepal") return "NEP";
+    if( teamName === "Oman") return "OMA";
+    if( teamName === "Papua New Guinea") return "PNG";
+    if( teamName === "United Arab Emirates") return "UAE";
+    if( teamName === "Zambia") return "ZAM";
+    
+  };
+
+  // Add this helper function for status styling
+  const getStatusStyles = (status: MatchStatus) => {
+    const baseStyles = "px-3 py-1 rounded-full text-xs font-semibold";
+    switch (status) {
+      case 'completed':
+        return `${baseStyles} bg-red-100 text-red-700`;
+      case 'ongoing':
+        return `${baseStyles} bg-green-100 text-green-700`;
+      case 'upcoming':
+        return `${baseStyles} bg-blue-100 text-blue-700`;
+    }
+  };
+
+  if (loading) {
+    return <div>Loading matches...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold text-dark-olive">Matches</h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Select defaultValue="all">
+          <Select 
+            defaultValue="all" 
+            onValueChange={(value) => setSelectedStatus(value as MatchStatus | 'all')}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Matches</SelectItem>
               <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="ongoing">Ongoing</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="bg-light-teal hover:bg-teal text-dark-olive" asChild>
-            <Link href={`/tournaments/${tournamentId}/matches/create`}>Add Match</Link>
-          </Button>
         </div>
       </div>
 
       <div className="space-y-4">
-        {matches.map((match) => (
+        {filteredMatches.map((match) => (
           <Card key={match.id} className="border-olive/20 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                {/* Left side - Match info */}
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-olive" />
-                      <span className="text-sm text-olive">{match.date}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-olive" />
-                      <span className="text-sm text-olive">{match.time}</span>
+                  {/* Date and Time Row */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-6">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-olive" />
+                        <span className="text-sm font-medium text-olive">
+                          {format(new Date(match.matchDate), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-olive" />
+                        <span className="text-sm font-medium text-olive">
+                          {format(new Date(match.matchDate), 'hh:mm a')}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-center">
-                      <div className="h-12 w-12 bg-light-teal rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="font-bold text-dark-olive">{match.team1Short}</span>
+
+                  {/* Teams Section */}
+                  <div className="flex items-center justify-between px-4">
+                    <div className="text-center space-y-2">
+                      <div className="h-16 w-16 bg-light-teal rounded-full flex items-center justify-center mx-auto">
+                        <span className="font-bold text-xl text-dark-olive">
+                          {getTeamInitials(match.team1Name)}
+                        </span>
                       </div>
-                      <h3 className="font-medium text-dark-olive">{match.team1}</h3>
+                      <h3 className="font-medium text-dark-olive text-sm">
+                        {match.team1Name}
+                      </h3>
                     </div>
-                    <div className="text-center">
-                      <div className="text-xl font-bold text-dark-olive">VS</div>
+                    <div className="text-center px-4">
+                      <div className="text-2xl font-bold text-dark-olive opacity-50">VS</div>
                     </div>
-                    <div className="text-center">
-                      <div className="h-12 w-12 bg-light-teal rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="font-bold text-dark-olive">{match.team2Short}</span>
+                    <div className="text-center space-y-2">
+                      <div className="h-16 w-16 bg-light-teal rounded-full flex items-center justify-center mx-auto">
+                        <span className="font-bold text-xl text-dark-olive">
+                          {getTeamInitials(match.team2Name)}
+                        </span>
                       </div>
-                      <h3 className="font-medium text-dark-olive">{match.team2}</h3>
+                      <h3 className="font-medium text-dark-olive text-sm">
+                        {match.team2Name}
+                      </h3>
                     </div>
                   </div>
-                  <div className="mt-4 text-center">
-                    <div className="flex items-center justify-center gap-2 text-sm text-olive mb-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{match.venue}</span>
+
+                  {/* Venue Section */}
+                  <div className="mt-6 flex justify-center">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-olive" />
+                      <span className="text-sm font-medium text-olive">
+                        {match.venueName}
+                      </span>
                     </div>
-                    {match.status === "completed" && (
-                      <div className="text-sm font-medium text-dark-olive mt-2">{match.result}</div>
-                    )}
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm" className="w-full md:w-auto" asChild>
+
+                {/* Right side - Status and Buttons */}
+                <div className="flex flex-col gap-3 min-w-[140px] items-center">
+                  <div className={getStatusStyles(getMatchStatus(match.matchDate))}>
+                    {getMatchStatus(match.matchDate).toUpperCase()}
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-center justify-center font-medium" 
+                    asChild
+                  >
                     <Link href={`/matches/${match.id}`}>
-                      {match.status === "upcoming" ? "Match Details" : "Scorecard"}
+                      {getMatchStatus(match.matchDate) === 'upcoming' ? (
+                        <span className="flex items-center gap-2">
+                          Match Details
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          View Scorecard
+                        </span>
+                      )}
                     </Link>
                   </Button>
-                  {match.status === "upcoming" && (
-                    <Button size="sm" className="w-full md:w-auto bg-light-teal hover:bg-teal text-dark-olive" asChild>
-                      <Link href={`/matches/${match.id}/edit`}>Edit Match</Link>
+                  
+                  {getMatchStatus(match.matchDate) === 'upcoming' && (
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-light-teal hover:bg-teal text-dark-olive font-medium"
+                      asChild
+                    >
+                      <Link href={`/matches/${match.id}/edit`}>
+                        Edit Match
+                      </Link>
                     </Button>
                   )}
                 </div>
