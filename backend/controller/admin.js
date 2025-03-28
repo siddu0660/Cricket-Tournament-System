@@ -596,7 +596,7 @@ function handlePlayerMatchStatistics(matchStatisticsId, playerId) {
             }
 
             if (results.length > 0) {
-                resolve(results[0].playerMatchStatisticsId);
+                resolve(results[0]);
             } else {
                 const insertSql = `
                     INSERT INTO PlayerMatchStatistics (matchStatisticsId, playerId)
