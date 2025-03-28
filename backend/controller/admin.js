@@ -471,16 +471,13 @@ function deletePlayer(playerId) {
 function addSquad(data) {
     return new Promise((resolve, reject) => {
         const sql = `
-            INSERT INTO Squad (teamId, tournamentId, players)
+            INSERT INTO Squad (teamId, tournamentId)
             VALUES (?, ?, ?)
         `;
-        
-        const playersArray = JSON.parse(data.players);
 
         const values = [
             data.teamId,
-            data.tournamentId,
-            JSON.stringify(playersArray),
+            data.tournamentId
         ];
 
         db.query(sql, values, (err, result) => {
