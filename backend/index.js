@@ -214,6 +214,17 @@ userRouter.get("/players/team/:id", async (req, res) => {
     }
 });
 
+userRouter.get("/matches/:id", async (req, res) => {
+    try {
+        const matchData = await matchController.getMatchById(req.params.id);
+        console.log(matchData);
+        res.status(200).json(matchData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
 // Admin Routes
 
 const adminRouter = express.Router();
@@ -518,6 +529,17 @@ adminRouter.delete("/players/:id", async (req, res) => {
         console.log(error.message);
     }
 });
+
+adminRouter.get("/matches/:id", async (req, res) => {
+    try {
+        const matchData = await matchController.getMatchById(req.params.id);
+        console.log(matchData);
+        res.status(200).json(matchData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
 
 adminRouter.post("/matchConclude/:id", async (req, res) => {
     try {
