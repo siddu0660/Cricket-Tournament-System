@@ -584,7 +584,7 @@ function handleAddMatchStatistics(matchId, teamId) {
 function handlePlayerMatchStatistics(matchStatisticsId, playerId) {
     return new Promise((resolve, reject) => {
         const checkSql = `
-            SELECT playerMatchStatisticsId FROM PlayerMatchStatistics
+            SELECT * FROM PlayerMatchStatistics
             WHERE matchStatisticsId = ? AND playerId = ?
         `; 
         

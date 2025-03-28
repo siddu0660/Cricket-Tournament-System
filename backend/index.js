@@ -708,12 +708,12 @@ adminRouter.post("/matchStatistics", async (req, res) => {
     }
 })
 
-adminRouter.get("/playerMatchStatistics", async (req, res) => {
+adminRouter.post("/playerMatchStatistics", async (req, res) => {
     try {
         const matchStatisticsId = req.body.matchStatisticsId;
         const playerId = req.body.playerId;
         console.log("Data for Player Match Statistics : ", req.body);
-        const playerMatchStatistics = await playerMatchStatisticsAdminController(matchStatisticsId, playerId);
+        const playerMatchStatistics = await playerMatchStatisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
         res.status(200).json(playerMatchStatistics);
     } catch (error) {
         res.status(500).json({ error: error.message });
