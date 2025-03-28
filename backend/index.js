@@ -676,13 +676,14 @@ adminRouter.post("/matchStatistics", async (req, res) => {
         const matchId = req.body.matchId;
         const teamId = req.body.teamId;
         console.log("Data for Match Statistics : ", req.body);
-        await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
-        res.status(200).json({ message : "Match Statistics Added successfully"});
+        const data =await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
+        res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error : error.message });
         console.log(error.message);
     }
 })
+
 
 const port = 8000;
 
