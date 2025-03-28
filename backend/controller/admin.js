@@ -569,6 +569,42 @@ function handleAddMatchStatistics(matchId, teamId) {
     });
 }
 
+function handlePlayerMatchStatistics(matchStatisticsId, playerId) {
+    return new Promise((resolve, reject) => {
+        const checkSql = `
+            SELECT playerMatchStatisticsId FROM PlayerMatchStatistics
+            WHERE matchStatisticsId = ? AND playerId = ?
+        `; 
+        
+        const checkValues = [matchStatisticsId, playerId];
+
+        db.query(checkSql, checkValues, (err, results) => {
+            if (err) {
+                return reject(err);
+            }
+
+            if (results.length > 0) {
+                resolve(results[0].playerMatchStatisticsId);
+            } else {
+                const insertSql = `
+                    INSERT INTO PlayerMatchStatistics (matchStatisticsId, playerId)
+                    VALUES (?, ?)
+                `;
+                
+                const insertValues = [matchStatisticsId, playerId];
+
+                db.query(insertSql, insertValues, (insertErr, insertResult) => {
+                    if (insertErr) {
+                        reject(insertErr);
+                    } else {
+                        resolve(insertResult.insertId);
+                    }
+                });
+            }
+        });
+    });
+}
+
 const teamAdminController = {
     addTeam,
     updateTeam,
@@ -612,6 +648,10 @@ const matchStatisticsAdminController = {
     handleAddMatchStatistics
 }
 
+const playerMatchStatisticsAdminController = {
+    handlePlayerMatchStatistics
+}
+
 module.exports = {
     teamAdminController,
     venueAdminController,
@@ -619,5 +659,6 @@ module.exports = {
     matchAdminController,
     playerAdminController,
     squadAdminController,
-    matchStatisticsAdminController
+    matchStatisticsAdminController,
+    playerMatchStatisticsAdminController
 }

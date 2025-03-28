@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController, matchController, playerController, squadController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController } = require("./controller/admin");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController, playerMatchStatisticsAdminController } = require("./controller/admin");
 
 require("dotenv").config();
 
@@ -676,7 +676,7 @@ adminRouter.post("/matchStatistics", async (req, res) => {
         const matchId = req.body.matchId;
         const teamId = req.body.teamId;
         console.log("Data for Match Statistics : ", req.body);
-        const data =await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
+        const data = await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
         res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error : error.message });
@@ -684,6 +684,18 @@ adminRouter.post("/matchStatistics", async (req, res) => {
     }
 })
 
+adminRouter.get("/playerMatchStatistics", async (req, res) => {
+    try {
+        const matchStatisticsId = req.body.matchStatisticsId;
+        const playerId = req.body.playerId;
+        console.log("Data for Player Match Statistics : ", req.body);
+        const playerMatchStatistics = await playerMatchStatisticsAdminController(matchStatisticsId, playerId);
+        res.status(200).json(playerMatchStatistics);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
 
 const port = 8000;
 
