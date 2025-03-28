@@ -130,9 +130,9 @@ export default function TeamsPage() {
               </CardContent>
               <CardFooter className="flex justify-between border-t bg-muted/50 px-6 py-3">
                 <div className="flex gap-2">
-                  <Button asChild variant="outline" size="sm">
+                  {/* <Button asChild variant="outline" size="sm">
                     <Link href={`/teams/${team.teamId}`}>Team Details</Link>
-                  </Button>
+                  </Button> */}
                   <Button asChild variant="default" size="sm">
                     <Link href={`/teams/${team.teamId}/players`}>View Players</Link>
                   </Button>

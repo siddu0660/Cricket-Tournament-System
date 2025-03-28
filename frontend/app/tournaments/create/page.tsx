@@ -39,7 +39,7 @@ export default function CreateTournamentPage() {
   const [tournamentName, setTournamentName] = useState("")
   const [location, setLocation] = useState("")
   const [description, setDescription] = useState("")
-  const [format, setFormat] = useState("t20")
+  const [format, setFormat] = useState("T20")
   const [tournamentType, setTournamentType] = useState("league")
 
   const handleAddTeam = () => {
@@ -318,10 +318,10 @@ export default function CreateTournamentPage() {
                       <SelectValue placeholder="Select format" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="t20">T20</SelectItem>
-                      <SelectItem value="odi">ODI</SelectItem>
-                      <SelectItem value="test">Test</SelectItem>
-                      <SelectItem value="100-ball">100-ball</SelectItem>
+                      <SelectItem value="T20">T20</SelectItem>
+                      <SelectItem value="ODI">ODI</SelectItem>
+                      <SelectItem value="Test">Test</SelectItem>
+                      <SelectItem value="100-Ball">100-Ball</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

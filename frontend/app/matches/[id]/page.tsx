@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Trophy, Clock, Award, User, ArrowLeft } from "lucide-react"
 import { getMatchDetails } from '@/services/matchService';
-import { Match } from '@/types/matchDetails';
+import { Match, MatchAPIResponse } from '@/types/matchDetails';
 
 export default function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -18,8 +18,49 @@ export default function MatchDetailsPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const fetchMatchDetails = async () => {
       try {
-        const data = await getMatchDetails(Number(resolvedParams.id));
-        setMatch(data);
+        const data: MatchAPIResponse = await getMatchDetails(Number(resolvedParams.id));
+        // Transform the API response to match the expected structure
+        const transformedData: Match = {
+          team1: {
+            name: data.team1Name,
+            id: data.team1Id,
+            score: "TBD", 
+            overs: "0.0"   
+          },
+          team2: {
+            name: data.team2Name,
+            id: data.team2Id,
+            score: "TBD",  // Add these if available from API
+            overs: "0.0"   // Add these if available from API
+          },
+          tournament: {
+            name: data.tournamentName,
+            id: data.tournamentId
+          },
+          date: data.matchDate,
+          time: new Date(data.matchDate).toLocaleTimeString(),
+          venue: data.venueName,
+          location: "", // Add if available from API
+          result: data.matchResult,
+          toss: {
+            winner: "TBD", // Add if available from API
+            decision: "TBD" // Add if available from API
+          },
+          umpires: data.umpires,
+          manOfTheMatch: {
+            name: data.manOfTheMatchName || "TBD",
+            performance: "TBD" // Add if available from API
+          },
+          battingStats: {
+            team1: [], 
+            team2: []  
+          },
+          bowlingStats: {
+            team1: [], 
+            team2: []  
+          }
+        };
+        setMatch(transformedData);
       } catch (err) {
         setError('Failed to load match details');
       } finally {
@@ -80,7 +121,7 @@ export default function MatchDetailsPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-cricket-brown" />
                   <span>
-                    {match.venue}, {match.location}
+                    {match.venue}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

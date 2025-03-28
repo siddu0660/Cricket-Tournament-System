@@ -60,3 +60,23 @@ export interface Match {
     wickets: number;
     economy: number;
   }
+
+  export interface MatchAPIResponse {
+    matchId: number;
+    tournamentId: number;
+    tournamentName: string;
+    team1Id: number;
+    team1Name: string;
+    team2Id: number;
+    team2Name: string;
+    venueId: number;
+    venueName: string;
+    matchDate: string;
+    matchFormat: string;
+    winnerId: number;
+    matchResult: string;
+    umpires: string[];
+    manOfTheMatchId: number;
+    manOfTheMatchName: string;
+  }
+  
