@@ -14,7 +14,8 @@ export const fetchSquadPlayers = async (teamId: number, tournamentId: number): P
         if (Array.isArray(response.data)) {
             return response.data.map(player => ({
                 playerId: player.id,
-                playerName: player.name
+                playerName: player.name,
+                teamId: player.teamId
             }));
         }
         

@@ -42,6 +42,44 @@ interface PlayerMatchStats {
   stumpingsTaken: number;
 }
 
+// Update the OutDialog component to handle the confirmation properly
+const OutDialog = ({ isOpen, onClose, onConfirm }: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  onConfirm: (status: string) => void 
+}) => {
+  const [outStatus, setOutStatus] = useState("");
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>How was the player dismissed?</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <Textarea
+            value={outStatus}
+            onChange={(e) => setOutStatus(e.target.value)}
+            placeholder="e.g., Caught by Smith, Bowled by Johnson"
+            className="h-24"
+          />
+          <Button 
+            onClick={() => {
+              if (outStatus.trim()) {
+                onConfirm(outStatus.trim());
+                setOutStatus(""); // Reset the input
+              }
+            }}
+            className="bg-light-teal hover:bg-teal text-dark-olive font-medium"
+          >
+            Confirm
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function TournamentMatches({ tournamentId }: TournamentMatchesProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +90,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statisticsDialogOpen, setStatisticsDialogOpen] = useState(false);
   const [selectedTeamName, setSelectedTeamName] = useState("");
+  const [otherTeamName, setOtherTeamName] = useState("");
   const [currentMatchStatisticsId, setCurrentMatchStatisticsId] = useState<number | null>(null);
   const [playerStats, setPlayerStats] = useState<PlayerMatchStats[]>([]);
   const [battingTeamName, setBattingTeamName] = useState('');
@@ -61,6 +100,10 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   const [battingSquad, setBattingSquad] = useState<SquadPlayer[]>([]);
   const [bowlingSquad, setBowlingSquad] = useState<SquadPlayer[]>([]);
   const [localPlayerStats, setLocalPlayerStats] = useState<PlayerMatchStats[]>([]);
+  const [outDialogOpen, setOutDialogOpen] = useState(false);
+  const [selectedPlayerForOut, setSelectedPlayerForOut] = useState<number | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [currentMatchForDialog, setCurrentMatchForDialog] = useState<Match | null>(null);
 
   // Add this function to determine match status
   const getMatchStatus = (matchDate: string): MatchStatus => {
@@ -148,20 +191,26 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
     }
   };
 
-  const handleConcludeMatch = async (matchId: string) => {
+  const handleConcludeMatch = async () => {
     try {
+      if (!currentMatchForDialog) {
+        console.error("No match selected for conclusion");
+        return;
+      }
+
       const conclusionData = {
         winnerId: parseInt(selectedWinner),
         matchResult: description,
         manOfTheMatchId: 1,
       };
       
-      await concludeMatch(matchId, conclusionData);
+      await concludeMatch(currentMatchForDialog.matchId.toString(), conclusionData);
       console.log("Match concluded successfully");
       
       // Reset form
       setSelectedWinner("");
       setDescription("");
+      setCurrentMatchForDialog(null);
       
       // Close dialog
       setIsDialogOpen(false);
@@ -174,40 +223,125 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
     }
   };
 
+
+  const fetchPlayerMatchStatistics = async (matchStatisticsId: number, playerId: number) => {
+    try {
+      
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics/${matchStatisticsId}/${playerId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching player match statistics:', error);
+      return null;
+    }
+  };
+
   const handleCreateStatistics = async (matchId: number, teamId: number) => {
     try {
       const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/matchStatistics`, {
         matchId,
         teamId
       });
-      if (data) {
-        setSelectedTeamName(teamId.toString());
-        setStatisticsDialogOpen(true);
-      }
 
-      setCurrentMatchStatisticsId(data.matchStatisticsId);
+      console.log("data", data);
       
-      const match = matches.find(m => m.matchId === matchId);
-      if (match) {
-        if (teamId === match.team1Id) {
-          setBattingTeamName(match.team1Name);
-          setBowlingTeamName(match.team2Name);
-          // Get batting team squad
-          const battingSquadData = await fetchSquadPlayers(match.team1Id, parseInt(tournamentId));
-          console.log("Batting Squad :" ,battingSquadData)
-          setBattingSquad(battingSquadData);
-          // Get bowling team squad
-          const bowlingSquadData = await fetchSquadPlayers(match.team2Id, parseInt(tournamentId));
-          setBowlingSquad(bowlingSquadData);
-        } else {
-          setBattingTeamName(match.team2Name);
-          setBowlingTeamName(match.team1Name);
-          // Get batting team squad
-          const battingSquadData = await fetchSquadPlayers(match.team2Id, parseInt(tournamentId));
-          setBattingSquad(battingSquadData);
-          // Get bowling team squad
-          const bowlingSquadData = await fetchSquadPlayers(match.team1Id, parseInt(tournamentId));
-          setBowlingSquad(bowlingSquadData);
+      if (data) {
+        setStatisticsDialogOpen(true);
+        setCurrentMatchStatisticsId(data.matchStatisticsId);
+        
+        const match = matches.find(m => m.matchId === matchId);
+        if (match) {
+          if (teamId === match.team1Id) {
+            setBattingTeamName(match.team1Name);
+            setBowlingTeamName(match.team2Name);
+            setSelectedTeamName(match.team1Id.toString());
+            setOtherTeamName(match.team2Id.toString());
+            const battingSquadData = await fetchSquadPlayers(match.team1Id, parseInt(tournamentId));
+            const bowlingSquadData = await fetchSquadPlayers(match.team2Id, parseInt(tournamentId));
+            setBattingSquad(battingSquadData);
+            setBowlingSquad(bowlingSquadData);
+
+            // Fetch existing player statistics for both batting and bowling squads
+            const allPlayerStatsPromises = [
+              ...battingSquadData.map(async (player) => {
+                if (player.playerId) {
+                  const stats = await fetchPlayerMatchStatistics(data.matchStatisticsId, player.playerId);
+                  if (stats) {
+                    return {
+                      ...stats,
+                      fullName: player.playerName,
+                      isBatting: true
+                    };
+                  }
+                }
+                return null;
+              }),
+              ...bowlingSquadData.map(async (player) => {
+                if (player.playerId) {
+                  const stats = await fetchPlayerMatchStatistics(data.matchStatisticsId, player.playerId);
+                  if (stats) {
+                    return {
+                      ...stats,
+                      fullName: player.playerName,
+                      isBowling: true
+                    };
+                  }
+                }
+                return null;
+              })
+            ];
+
+            const playerStats = (await Promise.all(allPlayerStatsPromises))
+              .filter(Boolean)
+              .filter(stat => stat.battingStatus !== "Not Yet Played" || stat.oversBowled > 0);
+            setPlayerStats(playerStats);
+          } else {
+            // Similar logic for team2
+            setBattingTeamName(match.team2Name);
+            setBowlingTeamName(match.team1Name);
+            setSelectedTeamName(match.team2Id.toString());
+            setOtherTeamName(match.team1Id.toString());
+            const battingSquadData = await fetchSquadPlayers(match.team2Id, parseInt(tournamentId));
+            const bowlingSquadData = await fetchSquadPlayers(match.team1Id, parseInt(tournamentId));
+            setBattingSquad(battingSquadData);
+            setBowlingSquad(bowlingSquadData);
+
+            // Fetch existing player statistics for both batting and bowling squads
+            const allPlayerStatsPromises = [
+              ...battingSquadData.map(async (player) => {
+                if (player.playerId) {
+                  const stats = await fetchPlayerMatchStatistics(data.matchStatisticsId, player.playerId);
+                  if (stats) {
+                    return {
+                      ...stats,
+                      fullName: player.playerName,
+                      isBatting: true
+                    };
+                  }
+                }
+                return null;
+              }),
+              ...bowlingSquadData.map(async (player) => {
+                if (player.playerId) {
+                  const stats = await fetchPlayerMatchStatistics(data.matchStatisticsId, player.playerId);
+                  if (stats) {
+                    return {
+                      ...stats,
+                      fullName: player.playerName,
+                      isBowling: true
+                    };
+                  }
+                }
+                return null;
+              })
+            ];
+
+            const playerStats = (await Promise.all(allPlayerStatsPromises))
+              .filter(Boolean)
+              .filter(stat => stat.battingStatus !== "Not Yet Played" || stat.oversBowled > 0);
+            setPlayerStats(playerStats);
+          }
         }
       }
     } catch (error) {
@@ -219,16 +353,39 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
     try {
       if (!currentMatchStatisticsId) return;
 
+      // Find the player in the batting squad to check squadId
+      const selectedPlayer = battingSquad.find(p => p.playerId === parseInt(playerId));
+      
+      // Check against selectedTeamName (batting team)
+      if (!selectedPlayer || selectedPlayer.teamId !== parseInt(selectedTeamName)) {
+        console.error('Player does not belong to the batting team');
+        return;
+      }
+
+      // First create the player statistics
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics`, {
         matchStatisticsId: currentMatchStatisticsId,
         playerId: parseInt(playerId)
       });
-      console.log("Response :", response.data)
 
-      // Add the new player stats to the existing stats
-      setPlayerStats(prevStats => [...prevStats, response.data],);
+      const playerMatchStatisticsId = response.data.playerMatchStatisticsId;
       
-      // Reset the selected batsman
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics/${playerMatchStatisticsId}`,
+        {
+          battingStatus: "Not Out"
+        }
+      );
+
+      const updatedStats = await fetchPlayerMatchStatistics(currentMatchStatisticsId, parseInt(playerId));
+      if (updatedStats) {
+        const newPlayerStats = {
+          ...updatedStats,
+          fullName: selectedPlayer?.playerName || 'Unknown Player'
+        };
+        setPlayerStats(prevStats => [...prevStats, newPlayerStats]);
+      }
+      
       setSelectedBatsman("");
     } catch (error) {
       console.error('Error adding batsman:', error);
@@ -238,27 +395,48 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   const handleAddBowler = async (playerId: string) => {
     try {
       if (!currentMatchStatisticsId) return;
+
+      const selectedPlayer = bowlingSquad.find(p => p.playerId === parseInt(playerId));
+      
+      // Check against otherTeamName (bowling team)
+      if (!selectedPlayer || selectedPlayer.teamId !== parseInt(otherTeamName)) {
+        console.error('Player does not belong to the bowling team');
+        return;
+      }
       
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics`, {
         matchStatisticsId: currentMatchStatisticsId,
         playerId: parseInt(playerId)
       });
 
-      // Add the new player stats to the existing stats
-      setPlayerStats(prevStats => [...prevStats, response.data]);
+      const playerMatchStatisticsId = response.data.playerMatchStatisticsId;
+      console.log("player match statistics id", playerMatchStatisticsId);
       
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics/${playerMatchStatisticsId}`,
+        {
+          oversBowled: 1
+        }
+      );
+
+      const newPlayerStats = {
+        ...response.data,
+        fullName: selectedPlayer.playerName,
+        oversBowled: 1, 
+        isBowler: true  
+      };
+      
+      setPlayerStats(prevStats => [...prevStats, newPlayerStats]);
       setSelectedBowler("");
     } catch (error) {
       console.error('Error adding bowler:', error);
     }
   };
 
-  // Initialize localPlayerStats when playerStats changes
   useEffect(() => {
     setLocalPlayerStats(playerStats);
   }, [playerStats]);
 
-  // Add a function to handle local updates
   const handleLocalStatChange = (playerMatchStatisticsId: number, updatedStats: Partial<PlayerMatchStats>) => {
     setLocalPlayerStats(prevStats => 
       prevStats.map(player => 
@@ -355,7 +533,6 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                         variant="ghost"
                         className="h-16 w-16 bg-light-teal rounded-full flex items-center justify-center mx-auto hover:bg-teal"
                         onClick={() => {
-                          setSelectedTeamName(match.team1Name);
                           handleCreateStatistics(match.matchId, match.team1Id);
                         }}
                       >
@@ -375,7 +552,6 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                         variant="ghost"
                         className="h-16 w-16 bg-light-teal rounded-full flex items-center justify-center mx-auto hover:bg-teal"
                         onClick={() => {
-                          setSelectedTeamName(match.team2Name);
                           handleCreateStatistics(match.matchId, match.team2Id);
                         }}
                       >
@@ -426,11 +602,22 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                   </Button>
                   
                   {getMatchStatus(new Date(match.matchDate).toISOString()) === 'upcoming' && (
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <Dialog 
+                      open={isDialogOpen} 
+                      onOpenChange={(open) => {
+                        setIsDialogOpen(open);
+                        if (!open) {
+                          setCurrentMatchForDialog(null);
+                          setSelectedWinner("");
+                          setDescription("");
+                        }
+                      }}
+                    >
                       <DialogTrigger asChild>
                         <Button 
                           size="sm" 
                           className="w-full bg-light-teal hover:bg-teal text-dark-olive font-medium"
+                          onClick={() => setCurrentMatchForDialog(match)}
                         >
                           Conclude Match
                         </Button>
@@ -450,12 +637,16 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                                 <SelectValue placeholder="Select winning team" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value={match.team1Id.toString()}>
-                                  {match.team1Name}
-                                </SelectItem>
-                                <SelectItem value={match.team2Id.toString()}>
-                                  {match.team2Name}
-                                </SelectItem>
+                                {currentMatchForDialog && (
+                                  <>
+                                    <SelectItem value={currentMatchForDialog.team1Id.toString()}>
+                                      {currentMatchForDialog.team1Name}
+                                    </SelectItem>
+                                    <SelectItem value={currentMatchForDialog.team2Id.toString()}>
+                                      {currentMatchForDialog.team2Name}
+                                    </SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -470,7 +661,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                             />
                           </div>
                           <Button
-                            onClick={() => handleConcludeMatch(match.matchId.toString())}
+                            onClick={handleConcludeMatch}
                             className="bg-light-teal hover:bg-teal text-dark-olive font-medium"
                           >
                             Submit
@@ -555,92 +746,111 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                     </tr>
                   </thead>
                   <tbody>
-                    {localPlayerStats.map((player) => (
-                      <tr key={player.playerMatchStatisticsId} className="border-t border-olive/20 hover:bg-light-teal/5">
-                        <td className="p-3 font-medium text-dark-olive">{player.fullName}</td>
-                        <td className="p-3">
-                          <select
-                            value={player.battingStatus}
-                            onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
-                              battingStatus: e.target.value
-                            })}
-                            className="w-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-teal focus:border-transparent"
-                          >
-                            <option value="Not Out">Not Out</option>
-                            <option value="Out">Out</option>
-                            <option value="DNB">DNB</option>
-                          </select>
-                        </td>
-                        <td className="p-3">
-                          <input
-                            type="number"
-                            value={player.runsScored}
-                            onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
-                              runsScored: parseInt(e.target.value) || 0
-                            })}
-                            className="w-20 p-2 border rounded-md text-center bg-white focus:ring-2 focus:ring-teal focus:border-transparent"
-                          />
-                        </td>
-                        <td className="p-3">
-                          <input
-                            type="number"
-                            value={player.ballsFaced}
-                            onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
-                              ballsFaced: parseInt(e.target.value) || 0
-                            })}
-                            className="w-20 p-2 border rounded-md text-center bg-white focus:ring-2 focus:ring-teal focus:border-transparent"
-                          />
-                        </td>
-                        <td className="p-3">
-                          <input
-                            type="number"
-                            value={player.fours}
-                            onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
-                              fours: parseInt(e.target.value) || 0
-                            })}
-                            className="w-16 p-1 border rounded text-right"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="number"
-                            value={player.sixes}
-                            onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
-                              sixes: parseInt(e.target.value) || 0
-                            })}
-                            className="w-16 p-1 border rounded text-right"
-                          />
-                        </td>
-                        <td className="p-2 text-right">
-                          {player.ballsFaced > 0 
-                            ? ((player.runsScored / player.ballsFaced) * 100).toFixed(2) 
-                            : '0.00'}
-                        </td>
-                        <td className="p-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              // Add validation before calling the update function
-                              if (player.playerMatchStatisticsId) {
-                                handleUpdatePlayerStats(player.playerMatchStatisticsId, {
-                                  runsScored: player.runsScored,
-                                  ballsFaced: player.ballsFaced,
-                                  fours: player.fours,
-                                  sixes: player.sixes,
-                                  battingStatus: player.battingStatus
-                                });
-                              } else {
-                                console.error('Missing playerMatchStatisticsId for player:', player);
-                              }
-                            }}
-                            className="hover:bg-green-100"
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {localPlayerStats
+                      .filter(player => {
+                        // Only show players from batting squad
+                        const isBatter = battingSquad.some(bp => bp.playerId === player.playerId);
+                        return isBatter && player.playerMatchStatisticsId != null;
+                      })
+                      .map((player, index) => (
+                        <tr 
+                          key={`${player.playerMatchStatisticsId}-${index}`}
+                          className={`border-t border-olive/20 ${
+                            player.battingStatus !== "Not Out" ? "bg-gray-50" : "hover:bg-light-teal/5"
+                          }`}
+                        >
+                          <td className="p-3 font-medium text-dark-olive">{player.fullName}</td>
+                          <td className="p-3">
+                            {player.battingStatus === "Not Out" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-green-600 border-green-200 hover:bg-green-50"
+                                onClick={() => {
+                                  setSelectedPlayerForOut(player.playerMatchStatisticsId);
+                                  setOutDialogOpen(true);
+                                }}
+                              >
+                                Batting
+                              </Button>
+                            ) : (
+                              <div className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded-md">
+                                {player.battingStatus}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <input
+                              type="number"
+                              value={player.runsScored}
+                              onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
+                                runsScored: parseInt(e.target.value) || 0
+                              })}
+                              className="w-20 p-2 border rounded-md text-center bg-white focus:ring-2 focus:ring-teal focus:border-transparent"
+                              disabled={player.battingStatus !== "Not Out"}
+                            />
+                          </td>
+                          <td className="p-3">
+                            <input
+                              type="number"
+                              value={player.ballsFaced}
+                              onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
+                                ballsFaced: parseInt(e.target.value) || 0
+                              })}
+                              className="w-20 p-2 border rounded-md text-center bg-white focus:ring-2 focus:ring-teal focus:border-transparent"
+                              disabled={player.battingStatus !== "Not Out"}
+                            />
+                          </td>
+                          <td className="p-3">
+                            <input
+                              type="number"
+                              value={player.fours}
+                              onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
+                                fours: parseInt(e.target.value) || 0
+                              })}
+                              className="w-16 p-1 border rounded text-right"
+                              disabled={player.battingStatus !== "Not Out"}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="number"
+                              value={player.sixes}
+                              onChange={(e) => handleLocalStatChange(player.playerMatchStatisticsId, {
+                                sixes: parseInt(e.target.value) || 0
+                              })}
+                              className="w-16 p-1 border rounded text-right"
+                              disabled={player.battingStatus !== "Not Out"}
+                            />
+                          </td>
+                          <td className="p-2 text-right">
+                            {player.ballsFaced > 0 
+                              ? ((player.runsScored / player.ballsFaced) * 100).toFixed(2) 
+                              : '0.00'}
+                          </td>
+                          <td className="p-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (player.playerMatchStatisticsId) {
+                                  handleUpdatePlayerStats(player.playerMatchStatisticsId, {
+                                    runsScored: player.runsScored,
+                                    ballsFaced: player.ballsFaced,
+                                    fours: player.fours,
+                                    sixes: player.sixes,
+                                    battingStatus: player.battingStatus
+                                  });
+                                }
+                              }}
+                              className="hover:bg-green-100"
+                              disabled={player.battingStatus !== "Not Out"}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -702,9 +912,16 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                   </thead>
                   <tbody>
                     {localPlayerStats
-                      .filter(player => player.oversBowled > 0)
-                      .map((player) => (
-                        <tr key={player.playerMatchStatisticsId} className="border-b">
+                      .filter(player => {
+                        // Only show players from bowling squad
+                        const isBowler = bowlingSquad.some(bp => bp.playerId === player.playerId);
+                        return isBowler && player.playerMatchStatisticsId != null;
+                      })
+                      .map((player, index) => (
+                        <tr 
+                          key={`bowling-${player.playerMatchStatisticsId}-${index}`}
+                          className="border-b"
+                        >
                           <td className="p-2">{player.fullName}</td>
                           <td className="p-2">
                             <input
@@ -783,6 +1000,41 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Add the OutDialog component */}
+      <OutDialog
+        isOpen={outDialogOpen}
+        onClose={() => {
+          setOutDialogOpen(false);
+          setSelectedPlayerForOut(null);
+        }}
+        onConfirm={async (status) => {
+          if (selectedPlayerForOut) {
+            try {
+              // Send PUT request to update batting status
+              const response = await axios.put(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/playerMatchStatistics/${selectedPlayerForOut}`,
+                {
+                  battingStatus: status
+                }
+              );
+
+              if (response.status === 200) {
+                // Update local state
+                handleLocalStatChange(selectedPlayerForOut, {
+                  battingStatus: status
+                });
+                
+                // Close the dialog
+                setOutDialogOpen(false);
+                setSelectedPlayerForOut(null);
+              }
+            } catch (error) {
+              console.error('Error updating batting status:', error);
+            }
+          }
+        }}
+      />
     </div>
   )
 }
