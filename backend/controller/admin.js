@@ -349,7 +349,7 @@ function updateMatchResult(matchId, data) {
     return new Promise((resolve, reject) => {
         const sql = `
             UPDATE Matches 
-            SET winnerId = ?, matchResult = ?, manOfTheMatchId = ? 
+            SET winnerId = ?, matchResult = ?, manOfTheMatchId = ?, matchStatus = 'Completed'
             WHERE matchId = ?
         `;
 
@@ -574,6 +574,20 @@ function handleAddMatchStatistics(matchId, teamId) {
                         reject(insertErr);
                     } else {
                         resolve(insertResult.insertId);
+                    }
+                });
+
+                const updateSql = `
+                    UPDATE Matches
+                    SET matchStatus = 'In Progress'
+                    WHERE matchId = ?
+                `;
+
+                db.query(updateSql, [matchId], (updateErr, updateResult) => {
+                    if (updateErr) {
+                        reject(updateErr);
+                    } else {
+                        resolve(updateResult);
                     }
                 });
             }
