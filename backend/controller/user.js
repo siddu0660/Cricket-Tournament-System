@@ -232,6 +232,28 @@ function getMatchesByTeam(teamId, tournamentId) {
   });
 }
 
+function getTeamIdBySquadByPlayerId(playerId) {
+  let squadId;
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT teamId 
+      FROM Squad 
+      WHERE JSON_CONTAINS(players, ?)
+    `;
+    db.query(sql, [JSON.stringify(playerId)], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (results.length > 0) {
+          resolve(results[0].teamId);
+        } else {
+          resolve(null); 
+        }
+      }
+    });
+  });
+}
+
 function getMatchStatsId(matchId, teamId) {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -259,8 +281,103 @@ function getMatchStatsId(matchId, teamId) {
     });
   });
 }
-//getMatchScoreCard
-//getMatchStats
+
+function getMatchScoreCard(matchId, callback) {
+  db.query(
+    "SELECT team1Id, team2Id FROM Matches WHERE matchId = ?",
+    [matchId],
+    (err, matchResults) => {
+      if (err) return callback(err);
+      if (matchResults.length === 0)
+        return callback(new Error("Match not found"));
+
+      const team1Id = matchResults[0].team1Id;
+      const team2Id = matchResults[0].team2Id;
+
+      const sql = `
+        WITH CombinedMS AS (
+          (
+              SELECT 
+                  ms.*,
+                  t1.TeamName AS Team1Name,
+                  t2.TeamName AS Team2Name
+              FROM 
+                  MatchStatistics ms
+              INNER JOIN Matches m ON m.matchId = ms.matchId
+              INNER JOIN Team t1 ON m.team1Id = t1.TeamID
+              INNER JOIN Team t2 ON m.team2Id = t2.TeamID
+              WHERE 
+                  ms.matchId = ? AND ms.teamId = ?
+          )
+          UNION
+          (
+              SELECT 
+                  ms.*,
+                  t1.TeamName AS Team1Name,
+                  t2.TeamName AS Team2Name
+              FROM 
+                  MatchStatistics ms
+              INNER JOIN Matches m ON m.matchId = ms.matchId
+              INNER JOIN Team t1 ON m.team1Id = t1.TeamID
+              INNER JOIN Team t2 ON m.team2Id = t2.TeamID
+              WHERE 
+                  ms.matchId = ? AND ms.teamId = ?
+          )
+        )
+
+        SELECT 
+            PMS.*,
+            CMS.Team1Name,
+            CMS.Team2Name,
+            CMS.matchId,
+            CMS.teamId,
+            CONCAT(p.firstName, ' ', p.secondName) AS playerFullName
+        FROM 
+            CombinedMS CMS
+        INNER JOIN 
+            PlayerMatchStatistics PMS 
+            ON CMS.matchStatisticsId = PMS.matchStatisticsId
+        INNER JOIN 
+            Player p 
+            ON PMS.playerId = p.playerId
+        ORDER BY 
+            CMS.teamId, PMS.playerId;
+      `;
+
+      db.query(
+        sql,
+        [matchId, team1Id, matchId, team2Id],
+        (err, playerStats) => {
+          if (err) return callback(err);
+
+          const processedPlayers = [];
+          let processedCount = 0;
+
+          const processPlayer = (index) => {
+            if (index >= playerStats.length) {
+              return callback(null, processedPlayers);
+            }
+
+            const player = playerStats[index];
+
+            getTeamIdBySquadByPlayerId(player.playerId)
+              .then((teamId) => {
+                processedPlayers.push({
+                  ...player,
+                  playerTeamId: teamId,
+                });
+                processedCount++;
+                processPlayer(processedCount);
+              })
+              .catch((err) => callback(err));
+          };
+
+          processPlayer(0);
+        }
+      );
+    }
+  );
+}
 
 // ----------------------------------------------------------- //
 
@@ -297,6 +414,8 @@ function getPlayersByTeam(teamId) {
     db.query(sql, [JSON.stringify(teamId)], (err, results) => {
       if (err) {
         reject(err);
+      } else if (results.length === 0) {
+        resolve({ message: "No Players in the Team" });
       } else {
         resolve(results);
       }
@@ -414,8 +533,8 @@ async function getAllSquads() {
         .map((playerId) => {
           const player = playerMap.get(playerId);
           return player
-            ? { id: player.id, name: player.name, teamId: squad.teamId }
-            : { id: playerId, name: "Unknown Player", teamId: squad.teamId };
+            ? { id: player.id, name: player.name, squadId: squad.squadId }
+            : { id: playerId, name: "Unknown Player", squadId: squad.squadId };
         })
         .filter(Boolean),
     }));
@@ -500,7 +619,7 @@ async function getSquadById(squadId) {
           const player = playerMap.get(playerId);
           return player
             ? { id: player.id, name: player.name, teamId: squad.teamId }
-            : { id: playerId, name: "Unknown Player", teamId: squad.teamId };
+            : { id: playerId, name: "Unknown Player", teamId: squad.squadId };
         })
         .filter(Boolean),
     };
@@ -631,7 +750,8 @@ const squadController = {
 }
 
 const matchStatisticsController = {
-    getMatchStatsId
+    getMatchStatsId,
+    getMatchScoreCard
 }
 
 module.exports = {

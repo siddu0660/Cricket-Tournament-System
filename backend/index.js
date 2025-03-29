@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const { teamController, venueController, tournamentController, matchController, playerController, squadController, matchStatisticsController } = require("./controller/user");
 const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController, playerMatchStatisticsAdminController } = require("./controller/admin");
+const util = require("util");
+const { get } = require("http");
 
 require("dotenv").config();
 
@@ -751,6 +753,19 @@ adminRouter.put("/playerMatchStatistics/:playerMatchStatisticId", async (req, re
     } catch (error) {
         console.error("Error updating player match statistics:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+const getMatchScoreCardAsync = util.promisify( matchStatisticsController.getMatchScoreCard );
+
+adminRouter.get("/matchScoreCard/:matchId", async (req, res) => {
+    try {
+        const matchId = req.params.matchId;
+        const scoreCard = await getMatchScoreCardAsync(matchId);
+        res.status(200).json(scoreCard);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
     }
 });
 

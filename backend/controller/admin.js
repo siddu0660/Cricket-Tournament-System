@@ -1,4 +1,4 @@
-const db = require('../config/db'); // Assuming dbConfig contains your database configuration
+const db = require('../config/db');
 
 // Teams
 function addTeam(data) {
