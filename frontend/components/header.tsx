@@ -26,7 +26,6 @@ export default function Header() {
     { name: "Players", href: "/players" },
     { name: "Matches", href: "/matches" },
     { name: "Venues", href: "/venues" },
-    { name: "Statistics", href: "/statistics" },
   ]
 
   const isActive = (path: string) => {

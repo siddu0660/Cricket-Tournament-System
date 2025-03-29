@@ -12,4 +12,5 @@ export interface Match {
     venueId: number;
     venueName: string;
     winnerId: number | null;
+    matchStatus: string;
 }

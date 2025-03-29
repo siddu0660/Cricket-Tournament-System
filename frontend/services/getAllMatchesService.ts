@@ -13,7 +13,6 @@ export const matchService = {
       
       console.log('API Response:', response.data);
       
-      // Check if response.data exists and is an array
       if (!response.data || !Array.isArray(response.data)) {
         console.error('Invalid response format:', response.data);
         throw new Error('Invalid response format from server');

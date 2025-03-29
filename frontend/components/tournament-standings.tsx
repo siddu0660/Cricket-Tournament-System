@@ -2,107 +2,42 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import axios from "axios"
+
+// Define the interface for the team standings
+interface TeamStanding {
+  teamId: number
+  teamName: string
+  matchesWon: number
+  matchesLost: number
+  matchesDrawn: number
+  noResultMatches: number
+  totalMatchesPlayed: number
+  totalPoints: string
+}
 
 export default function TournamentStandings({ tournamentId }: { tournamentId: string }) {
-  // Mock standings data
-  const standings = [
-    {
-      position: 1,
-      team: "Chennai Super Kings",
-      teamShort: "CSK",
-      played: 8,
-      won: 6,
-      lost: 2,
-      tied: 0,
-      noResult: 0,
-      points: 12,
-      netRunRate: "+0.978",
-    },
-    {
-      position: 2,
-      team: "Mumbai Indians",
-      teamShort: "MI",
-      played: 8,
-      won: 5,
-      lost: 3,
-      tied: 0,
-      noResult: 0,
-      points: 10,
-      netRunRate: "+0.546",
-    },
-    {
-      position: 3,
-      team: "Rajasthan Royals",
-      teamShort: "RR",
-      played: 8,
-      won: 5,
-      lost: 3,
-      tied: 0,
-      noResult: 0,
-      points: 10,
-      netRunRate: "+0.325",
-    },
-    {
-      position: 4,
-      team: "Royal Challengers Bangalore",
-      teamShort: "RCB",
-      played: 8,
-      won: 4,
-      lost: 4,
-      tied: 0,
-      noResult: 0,
-      points: 8,
-      netRunRate: "+0.123",
-    },
-    {
-      position: 5,
-      team: "Kolkata Knight Riders",
-      teamShort: "KKR",
-      played: 8,
-      won: 4,
-      lost: 4,
-      tied: 0,
-      noResult: 0,
-      points: 8,
-      netRunRate: "-0.052",
-    },
-    {
-      position: 6,
-      team: "Delhi Capitals",
-      teamShort: "DC",
-      played: 8,
-      won: 3,
-      lost: 5,
-      tied: 0,
-      noResult: 0,
-      points: 6,
-      netRunRate: "-0.195",
-    },
-    {
-      position: 7,
-      team: "Punjab Kings",
-      teamShort: "PBKS",
-      played: 8,
-      won: 3,
-      lost: 5,
-      tied: 0,
-      noResult: 0,
-      points: 6,
-      netRunRate: "-0.254",
-    },
-    {
-      position: 8,
-      team: "Sunrisers Hyderabad",
-      teamShort: "SRH",
-      played: 8,
-      won: 2,
-      lost: 6,
-      tied: 0,
-      noResult: 0,
-      points: 4,
-      netRunRate: "-0.889",
-    },
-  ]
+  const [standings, setStandings] = useState<TeamStanding[]>([])
+
+  const fetchPointsTable = async () => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/pointsTable/${tournamentId}`)
+      const transformedData = response.data.map((team: TeamStanding, index: number) => ({
+        ...team,
+        position: index + 1,
+        teamShort: team.teamName.split(' ').map(word => word[0]).join(''), 
+      }))
+      console.log(transformedData)
+      setStandings(transformedData)
+    } catch (error) {
+      console.error('Error fetching points table:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchPointsTable()
+  }, [tournamentId])
 
   return (
     <div>
@@ -124,24 +59,26 @@ export default function TournamentStandings({ tournamentId }: { tournamentId: st
               </TableRow>
             </TableHeader>
             <TableBody>
-              {standings.map((team) => (
-                <TableRow key={team.position} className="hover:bg-olive/5">
-                  <TableCell className="font-medium">{team.position}</TableCell>
+              {standings.map((team, index) => (
+                <TableRow key={team.teamId} className="hover:bg-olive/5">
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 bg-light-teal rounded-full flex items-center justify-center">
-                        <span className="font-bold text-dark-olive text-xs">{team.teamShort}</span>
+                        <span className="font-bold text-dark-olive text-xs">
+                          {team.teamName.split(' ').map(word => word[0]).join('')}
+                        </span>
                       </div>
-                      <span>{team.team}</span>
+                      <span>{team.teamName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">{team.played}</TableCell>
-                  <TableCell className="text-center">{team.won}</TableCell>
-                  <TableCell className="text-center">{team.lost}</TableCell>
-                  <TableCell className="text-center">{team.tied}</TableCell>
-                  <TableCell className="text-center">{team.noResult}</TableCell>
-                  <TableCell className="text-center font-bold">{team.points}</TableCell>
-                  <TableCell className="text-center">{team.netRunRate}</TableCell>
+                  <TableCell className="text-center">{team.totalMatchesPlayed}</TableCell>
+                  <TableCell className="text-center">{team.matchesWon}</TableCell>
+                  <TableCell className="text-center">{team.matchesLost}</TableCell>
+                  <TableCell className="text-center">{team.matchesDrawn}</TableCell>
+                  <TableCell className="text-center">{team.noResultMatches}</TableCell>
+                  <TableCell className="text-center font-bold">{team.totalPoints}</TableCell>
+                  <TableCell className="text-center">-</TableCell>
                 </TableRow>
               ))}
             </TableBody>

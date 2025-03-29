@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Trophy, Clock, Award, User, ArrowLeft } from "lucide-react"
 import { getMatchDetails } from '@/services/matchService';
 import { Match, MatchAPIResponse } from '@/types/matchDetails';
-
+import { getMatchStatistics, getMatchScoreCard } from '@/services/scoreCard';
 export default function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [match, setMatch] = useState<Match | null>(null);
@@ -19,19 +19,34 @@ export default function MatchDetailsPage({ params }: { params: Promise<{ id: str
     const fetchMatchDetails = async () => {
       try {
         const data: MatchAPIResponse = await getMatchDetails(Number(resolvedParams.id));
-        // Transform the API response to match the expected structure
+        
+        // Fetch match statistics
+        const statistics = await getMatchStatistics(
+          Number(resolvedParams.id),
+          data.team1Id,
+          data.team2Id
+        );
+
+        const scoreCard = await getMatchScoreCard(
+          Number(resolvedParams.id),
+          data.team1Id,
+          data.team2Id
+        );
+
+        console.log('Statistics:', statistics);
+        
         const transformedData: Match = {
           team1: {
             name: data.team1Name,
             id: data.team1Id,
-            score: "TBD", 
-            overs: "0.0"   
+            score: `${statistics.team1Stats.runsScored}/${statistics.team1Stats.totalWickets}`,
+            overs: statistics.team1Stats.oversPlayed.toString()
           },
           team2: {
             name: data.team2Name,
             id: data.team2Id,
-            score: "TBD",  // Add these if available from API
-            overs: "0.0"   // Add these if available from API
+            score: `${statistics.team2Stats.runsScored}/${statistics.team2Stats.totalWickets}`,
+            overs: statistics.team2Stats.oversPlayed.toString()
           },
           tournament: {
             name: data.tournamentName,
@@ -40,24 +55,25 @@ export default function MatchDetailsPage({ params }: { params: Promise<{ id: str
           date: data.matchDate,
           time: new Date(data.matchDate).toLocaleTimeString(),
           venue: data.venueName,
-          location: "", // Add if available from API
+          location: "", 
           result: data.matchResult,
           toss: {
-            winner: "TBD", // Add if available from API
-            decision: "TBD" // Add if available from API
+            winner: "TBD", 
+            decision: "TBD" 
           },
           umpires: data.umpires,
           manOfTheMatch: {
+            id: data.manOfTheMatchId,
             name: data.manOfTheMatchName || "TBD",
-            performance: "TBD" // Add if available from API
+            performance: "TBD",
           },
           battingStats: {
-            team1: [], 
-            team2: []  
+            team1: scoreCard.firstInnings.batting,
+            team2: scoreCard.secondInnings.batting
           },
           bowlingStats: {
-            team1: [], 
-            team2: []  
+            team1: scoreCard.secondInnings.bowling,
+            team2: scoreCard.firstInnings.bowling
           }
         };
         setMatch(transformedData);

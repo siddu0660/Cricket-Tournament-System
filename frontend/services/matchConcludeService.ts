@@ -4,6 +4,7 @@ import { MatchConcludeRequest } from '@/types/matchConclude';
 export const concludeMatch = async (matchId: string, data: Omit<MatchConcludeRequest, 'matchId'>) => {
   try {
     const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v2/matchConclude/${matchId}`, data);
+    console.log('Match concluded:', response.data);
     return response.data;
   } catch (error: any) {
     console.log('API Error:', {

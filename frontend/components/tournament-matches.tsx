@@ -105,26 +105,10 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [currentMatchForDialog, setCurrentMatchForDialog] = useState<Match | null>(null);
 
-  // Add this function to determine match status
-  const getMatchStatus = (matchDate: string): MatchStatus => {
-    const matchDateTime = new Date(matchDate);
-    const today = new Date();
-    const matchDay = startOfDay(matchDateTime);
-    const todayStart = startOfDay(today);
-
-    if (isToday(matchDateTime)) {
-      return 'ongoing';
-    } else if (isBefore(matchDay, todayStart)) {
-      return 'completed';
-    } else {
-      return 'upcoming';
-    }
-  };
-
   // Filter matches based on selected status
   const filteredMatches = matches.filter(match => {
     if (selectedStatus === 'all') return true;
-    return getMatchStatus(new Date(match.matchDate).toISOString()) === selectedStatus;
+    return match.matchStatus.toLowerCase() === selectedStatus;
   });
 
   useEffect(() => {
@@ -578,8 +562,8 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
 
                 {/* Right side - Status and Buttons */}
                 <div className="flex flex-col gap-3 min-w-[140px] items-center">
-                  <div className={getStatusStyles(getMatchStatus(new Date(match.matchDate).toISOString()))}>
-                    {getMatchStatus(new Date(match.matchDate).toISOString()).toUpperCase()}
+                  <div className={getStatusStyles(match.matchStatus.toLowerCase() as MatchStatus)}>
+                    {match.matchStatus.toUpperCase()}
                   </div>
                   
                   <Button 
@@ -589,7 +573,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                     asChild
                   >
                     <Link href={`/matches/${match.matchId}`}>
-                      {getMatchStatus(new Date(match.matchDate).toISOString()) === 'upcoming' ? (
+                      {match.matchStatus.toLowerCase() === 'upcoming' ? (
                         <span className="flex items-center gap-2">
                           Match Details
                         </span>
@@ -601,7 +585,7 @@ export default function TournamentMatches({ tournamentId }: TournamentMatchesPro
                     </Link>
                   </Button>
                   
-                  {getMatchStatus(new Date(match.matchDate).toISOString()) === 'upcoming' && (
+                  {match.matchStatus.toLowerCase() === 'upcoming' && (
                     <Dialog 
                       open={isDialogOpen} 
                       onOpenChange={(open) => {

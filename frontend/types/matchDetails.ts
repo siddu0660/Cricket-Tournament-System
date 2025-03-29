@@ -30,7 +30,6 @@ export interface Match {
     manOfTheMatch: {
       id: number;
       name: string;
-      team: string;
       performance: string;
     };
     battingStats: {
