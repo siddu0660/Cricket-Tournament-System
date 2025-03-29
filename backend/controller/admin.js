@@ -472,7 +472,7 @@ function addSquad(data) {
     return new Promise((resolve, reject) => {
         const sql = `
             INSERT INTO Squad (teamId, tournamentId)
-            VALUES (?, ?, ?)
+            VALUES (?, ?)
         `;
 
         const values = [
