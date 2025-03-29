@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X } from "lucide-react"
+import { Menu, Target, X } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 export default function Header() {
@@ -39,7 +39,6 @@ export default function Header() {
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
               <svg
-                xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -48,11 +47,14 @@ export default function Header() {
                 strokeLinejoin="round"
                 className="h-8 w-8 text-light-teal"
               >
-                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                <path d="M12 8v8" />
-                <path d="M8 12h8" />
+                {/* Cricket wicket icon */}
+                <line x1="8" y1="4" x2="8" y2="20" /> {/* Left stump */}
+                <line x1="12" y1="4" x2="12" y2="20" /> {/* Middle stump */}
+                <line x1="16" y1="4" x2="16" y2="20" /> {/* Right stump */}
+                <line x1="6" y1="4" x2="18" y2="4" /> {/* Top bail */}
+                <line x1="6" y1="6" x2="18" y2="6" /> {/* Bottom bail */}
               </svg>
-              <span className="ml-2 text-xl font-bold text-beige">CricketManager</span>
+              <span className="ml-2 text-xl font-bold text-beige">CricBuddy</span>
             </Link>
             <nav className="hidden md:ml-8 md:flex md:space-x-8">
               {navigation.map((item) => (

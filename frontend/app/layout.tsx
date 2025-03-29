@@ -20,6 +20,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314b8a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='4' x2='8' y2='20'/><line x1='12' y1='4' x2='12' y2='20'/><line x1='16' y1='4' x2='16' y2='20'/><line x1='6' y1='4' x2='18' y2='4'/><line x1='6' y1='6' x2='18' y2='6'/></svg>"
+        />
+      </head>
       <body className={`${inter.className} min-h-screen flex flex-col bg-beige`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <Header />
