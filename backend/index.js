@@ -780,6 +780,17 @@ adminRouter.get("/playerStats/tournament/:id", async (req, res) => {
     }
 })
 
+adminRouter.get("/pointsTable/:id", async (req, res) => {
+    try {
+        const tournamentId = req.params.id;
+        const pointsTable = await statisticsController.getPointsTable(tournamentId);
+        res.status(200).json(pointsTable);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
+
 const port = 8000;
 
 app.listen(port, () => {

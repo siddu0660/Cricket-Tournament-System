@@ -509,6 +509,43 @@ function getPlayerStatsByTournament(tournamentId) {
   });
 }
 
+function getPointsTable(tournamentId) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT 
+          t.teamId,
+          t.teamName,
+          COUNT(CASE WHEN m.winnerId = t.teamId THEN 1 ELSE NULL END) AS matchesWon,
+          COUNT(CASE WHEN m.winnerId != t.teamId AND m.winnerId IN (m.team1Id, m.team2Id) THEN 1 ELSE NULL END) AS matchesLost,
+          COUNT(CASE WHEN m.winnerId = 0 THEN 1 ELSE NULL END) AS matchesDrawn,
+          COUNT(CASE WHEN m.winnerId = -1 THEN 1 ELSE NULL END) AS noResultMatches,
+          COUNT(m.matchId) AS totalMatchesPlayed,
+          SUM(CASE 
+              WHEN m.winnerId = t.teamId THEN 2
+              WHEN m.winnerId = 0 THEN 1
+              ELSE 0 
+          END) AS totalPoints
+      FROM 
+          Team t
+      LEFT JOIN 
+          Matches m ON (m.team1Id = t.teamId OR m.team2Id = t.teamId)
+      WHERE 
+          m.tournamentId = ?
+      GROUP BY 
+          t.teamId, t.teamName
+      ORDER BY 
+          totalPoints DESC, matchesWon DESC;
+    `;
+
+    db.query(sql, [tournamentId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
 
 //getPlayerMatchStats
 //getPlayerTournamentStats
@@ -804,7 +841,8 @@ const squadController = {
 const statisticsController = {
     getMatchStatsId,
     getMatchScoreCard,
-    getPlayerStatsByTournament
+    getPlayerStatsByTournament,
+    getPointsTable
 }
 
 module.exports = {
