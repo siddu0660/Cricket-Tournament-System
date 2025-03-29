@@ -685,11 +685,8 @@ const squadAdminController = {
     deleteSquad
 }
 
-const matchStatisticsAdminController = {
-    handleAddMatchStatistics
-}
-
-const playerMatchStatisticsAdminController = {
+const statisticsAdminController = {
+    handleAddMatchStatistics,
     handlePlayerMatchStatistics,
     updatePlayerMatchStatistics
 }
@@ -701,6 +698,5 @@ module.exports = {
     matchAdminController,
     playerAdminController,
     squadAdminController,
-    matchStatisticsAdminController,
-    playerMatchStatisticsAdminController
+    statisticsAdminController
 }

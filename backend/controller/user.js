@@ -458,6 +458,58 @@ async function getPlayersBySquad(teamId, tournamentId) {
 }
 
 //getPlayersStats
+function getPlayerStatsByTournament(tournamentId) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT 
+          ps.*, 
+          CONCAT(p.firstName, ' ', p.secondName) AS playerName, 
+          p.playerId
+      FROM 
+          PlayerStats ps
+      INNER JOIN 
+          Player p ON ps.playerId = p.playerId
+      WHERE 
+          ps.tournamentId = ?;
+    `;
+
+    db.query(sql, [tournamentId], async (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        const enrichedResults = [];
+        for (const player of results) {
+          try {
+            const teamId = await getTeamIdBySquadByPlayerId(player.playerId);
+
+            if (teamId) {
+              const teamSql = `SELECT teamName FROM Team WHERE teamID = ?`;
+              const [teamResult] = await db.promise().query(teamSql, [teamId]);
+
+              const teamName =
+                teamResult.length > 0 ? teamResult[0].teamName : null;
+
+              enrichedResults.push({
+                ...player,
+                teamName: teamName,
+              });
+            } else {
+              enrichedResults.push({
+                ...player,
+                teamName: null,
+              });
+            }
+          } catch (error) {
+            reject(error);
+          }
+        }
+        resolve(enrichedResults);
+      }
+    });
+  });
+}
+
+
 //getPlayerMatchStats
 //getPlayerTournamentStats
 
@@ -749,9 +801,10 @@ const squadController = {
     getPlayersBySquad
 }
 
-const matchStatisticsController = {
+const statisticsController = {
     getMatchStatsId,
-    getMatchScoreCard
+    getMatchScoreCard,
+    getPlayerStatsByTournament
 }
 
 module.exports = {
@@ -761,5 +814,5 @@ module.exports = {
     matchController,
     playerController,
     squadController,
-    matchStatisticsController
+    statisticsController
 };

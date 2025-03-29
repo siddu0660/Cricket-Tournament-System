@@ -3,8 +3,8 @@ const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const { teamController, venueController, tournamentController, matchController, playerController, squadController, matchStatisticsController } = require("./controller/user");
-const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, matchStatisticsAdminController, playerMatchStatisticsAdminController } = require("./controller/admin");
+const { teamController, venueController, tournamentController, matchController, playerController, squadController, statisticsController } = require("./controller/user");
+const { teamAdminController, venueAdminController, tournamentAdminController, matchAdminController, playerAdminController, squadAdminController, statisticsAdminController } = require("./controller/admin");
 const util = require("util");
 const { get } = require("http");
 
@@ -702,7 +702,7 @@ adminRouter.post("/matchStatistics", async (req, res) => {
         const matchId = req.body.matchId;
         const teamId = req.body.teamId;
         console.log("Data for Match Statistics : ", req.body);
-        const data = await matchStatisticsAdminController.handleAddMatchStatistics(matchId, teamId);
+        const data = await statisticsAdminController.handleAddMatchStatistics(matchId, teamId);
         res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error : error.message });
@@ -715,7 +715,7 @@ adminRouter.post("/playerMatchStatistics", async (req, res) => {
         const matchStatisticsId = req.body.matchStatisticsId;
         const playerId = req.body.playerId;
         console.log("Data for Player Match Statistics : ", req.body);
-        const playerMatchStatistics = await playerMatchStatisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
+        const playerMatchStatistics = await statisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
         res.status(200).json(playerMatchStatistics);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -727,7 +727,7 @@ adminRouter.get("/playerMatchStatistics/:matchStatisticsId/:playerId", async (re
     try {
         const matchStatisticsId = req.params.matchStatisticsId;
         const playerId = req.params.playerId;
-        const playerMatchStatistics = await playerMatchStatisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
+        const playerMatchStatistics = await statisticsAdminController.handlePlayerMatchStatistics(matchStatisticsId, playerId);
         if (!playerMatchStatistics) {
             return res.status(404).json({ error: "Player match statistic not found" });
         }
@@ -744,7 +744,7 @@ adminRouter.put("/playerMatchStatistics/:playerMatchStatisticId", async (req, re
         const updateData = req.body;
         console.log("Updating Player Match Statistics for ID:", playerMatchStatisticId);
         console.log("Update data:", updateData);
-        const updatedPlayerMatchStatistic = await playerMatchStatisticsAdminController.updatePlayerMatchStatistics(playerMatchStatisticId, updateData);
+        const updatedPlayerMatchStatistic = await statisticsAdminController.updatePlayerMatchStatistics(playerMatchStatisticId, updateData);
 
         if (!updatedPlayerMatchStatistic) {
             return res.status(404).json({ error: "Player match statistic not found" });
@@ -756,7 +756,7 @@ adminRouter.put("/playerMatchStatistics/:playerMatchStatisticId", async (req, re
     }
 });
 
-const getMatchScoreCardAsync = util.promisify( matchStatisticsController.getMatchScoreCard );
+const getMatchScoreCardAsync = util.promisify( statisticsController.getMatchScoreCard );
 
 adminRouter.get("/matchScoreCard/:matchId", async (req, res) => {
     try {
@@ -768,6 +768,17 @@ adminRouter.get("/matchScoreCard/:matchId", async (req, res) => {
         console.log(error.message);
     }
 });
+
+adminRouter.get("/playerStats/tournament/:id", async (req, res) => {
+    try {
+        const tournamentId = req.params.id;
+        const playerStats = await statisticsController.getPlayerStatsByTournament(tournamentId);
+        res.status(200).json(playerStats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+})
 
 const port = 8000;
 
